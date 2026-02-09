@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>DSA Progress Tracker</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div class="container">
+
+    <h1>DSA Progress Tracker</h1>
+
+    <!-- Add Question Form -->
+    <div class="form-box">
+      <input type="text" id="title" placeholder="Question Title (e.g., Two Sum)" />
+
+      <input type="text" id="topic" placeholder="Topic (Array, String, DP...)" />
+
+      <select id="difficulty">
+        <option value="Easy">Easy</option>
+        <option value="Medium">Medium</option>
+        <option value="Hard">Hard</option>
+      </select>
+
+      <textarea id="notes" placeholder="Notes (optional)"></textarea>
+
+      <button id="addBtn">Add Question</button>
+    </div>
+
+    <!-- Progress Section -->
+    <div class="progress-box">
+      <p>Total: <span id="totalCount">0</span></p>
+      <p>Solved: <span id="solvedCount">0</span></p>
+      <p>Progress: <span id="progressPercent">0%</span></p>
+    </div>
+
+    <!-- Filter Buttons -->
+    <div class="filter-box">
+      <button onclick="filterQuestions('all')">All</button>
+      <button onclick="filterQuestions('solved')">Solved</button>
+      <button onclick="filterQuestions('unsolved')">Unsolved</button>
+    </div>
+
+    <!-- Question List -->
+    <div id="questionList"></div>
+
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
