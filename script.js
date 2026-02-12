@@ -9,6 +9,8 @@ const questionList = document.getElementById("questionList");
 // Question array (temporary, no storage yet)
 let questions = [];
 let currentFilter = "all";
+let currentSearch = "";
+
 
 
 // Add Question
@@ -33,7 +35,7 @@ addBtn.addEventListener("click", function () {
   };
 
   questions.push(question);
-  renderQuestions();
+  applySearchAndFilter();
 updateProgress();
 saveToLocalStorage();
 clearInputs();
@@ -41,51 +43,70 @@ clearInputs();
 });
 
 // Render Questions
-function renderQuestions() {
+// Render Questions
+function renderQuestions(list = questions) {
   questionList.innerHTML = "";
 
-  questions
-  .filter((q) => {
-    if (currentFilter === "solved") return q.solved;
-    if (currentFilter === "unsolved") return !q.solved;
-    return true;
-  })
-  .forEach((q) => {
+  list
+    .filter((q) => {
+      if (currentFilter === "solved") return q.solved;
+      if (currentFilter === "unsolved") return !q.solved;
+      return true;
+    })
+    .forEach((q) => {
+      const div = document.createElement("div");
+      div.style.border = "1px solid #ddd";
+      div.style.padding = "10px";
+      div.style.marginBottom = "8px";
+      div.style.borderRadius = "6px";
+      div.style.background = q.solved ? "#e6ffe6" : "#fff";
+      div.style.boxShadow = "0 1px 3px rgba(0,0,0,0.1)";
 
-    const div = document.createElement("div");
-    div.style.border = "1px solid #ddd";
-div.style.padding = "10px";
-div.style.marginBottom = "8px";
-div.style.borderRadius = "6px";
-div.style.background = q.solved ? "#e6ffe6" : "#fff";
-div.style.boxShadow = "0 1px 3px rgba(0,0,0,0.1)";
+      div.innerHTML = `
+        <strong>${q.title}</strong> (${q.topic}) - ${q.difficulty}
+        <br/>
+        Notes: ${q.notes || "None"}
+        <br/>
+        Status: ${q.solved ? "Solved ✅" : "Unsolved ❌"}
+        <br/>
+        <div style="margin-top:6px;">
+          <button onclick="toggleSolved(${q.id})">
+            ${q.solved ? "Mark Unsolved" : "Mark Solved"}
+          </button>
 
+          <button onclick="editQuestion(${q.id})" style="background:orange;">
+            Edit
+          </button>
 
-    div.innerHTML = `
-      <strong>${q.title}</strong> (${q.topic}) - ${q.difficulty}
-      <br/>
-      Notes: ${q.notes || "None"}
-      <br/>
-      Status: ${q.solved ? "Solved ✅" : "Unsolved ❌"}
-      <br/>
-      <div style="margin-top:6px;">
-  <button onclick="toggleSolved(${q.id})">
-    ${q.solved ? "Mark Unsolved" : "Mark Solved"}
-  </button>
+          <button onclick="deleteQuestion(${q.id})" style="background:red;">
+            Delete
+          </button>
+        </div>
+      `;
 
-  <button onclick="editQuestion(${q.id})" style="background:orange;">
-    Edit
-  </button>
+      questionList.appendChild(div);
+    });
+}
 
-  <button onclick="deleteQuestion(${q.id})" style="background:red;">
-    Delete
-  </button>
-</div>
+function applySearchAndFilter() {
+  let filtered = questions;
 
-    `;
+  // Apply Search
+  if (currentSearch !== "") {
+    filtered = filtered.filter((q) =>
+      q.title.toLowerCase().includes(currentSearch) ||
+      q.topic.toLowerCase().includes(currentSearch)
+    );
+  }
 
-    questionList.appendChild(div);
-  });
+  // Apply Filter
+  if (currentFilter === "solved") {
+    filtered = filtered.filter((q) => q.solved);
+  } else if (currentFilter === "unsolved") {
+    filtered = filtered.filter((q) => !q.solved);
+  }
+
+  renderQuestions(filtered);
 }
 
 
@@ -101,7 +122,7 @@ function toggleSolved(id) {
   questions = questions.map((q) =>
     q.id === id ? { ...q, solved: !q.solved } : q
   );
-renderQuestions();
+applySearchAndFilter();
 updateProgress();
 saveToLocalStorage();
 
@@ -111,7 +132,7 @@ saveToLocalStorage();
 // Delete Question
 function deleteQuestion(id) {
   questions = questions.filter((q) => q.id !== id);
-  renderQuestions();
+  applySearchAndFilter();
 updateProgress();
 saveToLocalStorage();
 
@@ -135,7 +156,7 @@ function loadFromLocalStorage() {
   const data = localStorage.getItem("dsaQuestions");
   if (data) {
     questions = JSON.parse(data);
-    renderQuestions();
+    applySearchAndFilter();
     updateProgress();
   }
 }
@@ -145,8 +166,9 @@ loadFromLocalStorage();
 
 function filterQuestions(type) {
   currentFilter = type;
-  renderQuestions();
+  applySearchAndFilter();
 }
+
 
 function editQuestion(id) {
   const q = questions.find((item) => item.id === id);
@@ -171,10 +193,27 @@ function editQuestion(id) {
   q.difficulty = newDifficulty || q.difficulty;
   q.notes = newNotes || q.notes;
 
-  renderQuestions();
+  applySearchAndFilter();
   updateProgress();
   saveToLocalStorage();
 }
+
+document.addEventListener("DOMContentLoaded", function () {
+  const searchInput = document.getElementById("searchInput");
+
+  searchInput.addEventListener("input", function () {
+  currentSearch = this.value.toLowerCase();
+
+  if (currentSearch === "") {
+    currentFilter = "all";   // reset filter automatically
+  }
+
+  applySearchAndFilter();
+});
+
+});
+
+
 
 
 
