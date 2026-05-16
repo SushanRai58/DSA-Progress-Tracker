@@ -2,20 +2,58 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>DSA Progress Tracker</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
+  <!-- Edit Modal (outside .container to avoid clip) -->
+  <div class="modal-overlay" id="editModal">
+    <div class="modal-box">
+      <button class="modal-close" id="modalClose">&#x2715;</button>
+      <h2>Edit Question</h2>
+      <input type="text" id="editTitle" placeholder="Question Title" />
+      <span class="error-msg" id="editTitleError"></span>
+      <input type="text" id="editTopic" placeholder="Topic" />
+      <span class="error-msg" id="editTopicError"></span>
+      <select id="editDifficulty">
+        <option value="Easy">Easy</option>
+        <option value="Medium">Medium</option>
+        <option value="Hard">Hard</option>
+      </select>
+      <input type="text" id="editTags" placeholder="Tags (comma-separated)" />
+      <textarea id="editNotes" placeholder="Notes (optional)" rows="3"></textarea>
+      <button id="modalSave">Save Changes</button>
+    </div>
+  </div>
+
+  <!-- Confirm Modal (used for import) -->
+  <div class="modal-overlay" id="confirmModal">
+    <div class="modal-box confirm-box">
+      <h2 id="confirmTitle">Confirm</h2>
+      <p id="confirmMessage"></p>
+      <div class="confirm-buttons">
+        <button id="confirmYes">Yes</button>
+        <button id="confirmNo" class="btn-danger">No</button>
+      </div>
+    </div>
+  </div>
+
   <div class="container">
 
-    <h1>DSA Progress Tracker</h1>
+    <div class="header-row">
+      <h1>DSA Progress Tracker</h1>
+      <button id="themeToggle" class="icon-btn" title="Toggle dark mode">&#9728;</button>
+    </div>
 
     <!-- Add Question Form -->
     <div class="form-box">
       <input type="text" id="title" placeholder="Question Title (e.g., Two Sum)" />
+      <span class="error-msg" id="titleError"></span>
 
       <input type="text" id="topic" placeholder="Topic (Array, String, DP...)" />
+      <span class="error-msg" id="topicError"></span>
 
       <select id="difficulty">
         <option value="Easy">Easy</option>
@@ -23,35 +61,117 @@
         <option value="Hard">Hard</option>
       </select>
 
-      <textarea id="notes" placeholder="Notes (optional)"></textarea>
+      <input type="text" id="tags" placeholder="Tags (comma-separated, e.g. BFS, Graph)" />
 
-      <button id="addBtn">Add Question</button>
+      <textarea id="notes" placeholder="Notes (optional)" rows="2"></textarea>
+
+      <div class="form-actions">
+        <button id="addBtn">Add Question</button>
+        <button id="quickAddToggle" class="btn-secondary">Quick Add</button>
+      </div>
     </div>
 
-    <!-- Progress Section -->
+    <!-- Quick Add Row (hidden by default) -->
+    <div class="quick-add-row" id="quickAddRow">
+      <input type="text" id="qaTitle" placeholder="Title" />
+      <input type="text" id="qaTopic" placeholder="Topic" />
+      <select id="qaDifficulty">
+        <option value="Easy">Easy</option>
+        <option value="Medium" selected>Medium</option>
+        <option value="Hard">Hard</option>
+      </select>
+      <button id="qaAdd">+ Add</button>
+    </div>
+
+    <!-- Progress / Stats Section -->
     <div class="progress-box">
-      <p>Total: <span id="totalCount">0</span></p>
-      <p>Solved: <span id="solvedCount">0</span></p>
-      <p>Progress: <span id="progressPercent">0%</span></p>
+      <div class="stats-top">
+        <div class="stat-item">
+          <span class="stat-label">Total</span>
+          <span class="stat-value" id="totalCount">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Solved</span>
+          <span class="stat-value" id="solvedCount">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Progress</span>
+          <span class="stat-value" id="progressPercent">0%</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Streak</span>
+          <span class="stat-value" id="streakCount">0 &#128293;</span>
+        </div>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progressBar" style="width:0%"></div>
+      </div>
+      <div class="diff-stats">
+        <span class="stat-pill pill-easy" id="easyStats">Easy: 0/0</span>
+        <span class="stat-pill pill-medium" id="mediumStats">Medium: 0/0</span>
+        <span class="stat-pill pill-hard" id="hardStats">Hard: 0/0</span>
+      </div>
+      <div class="topic-stats" id="topicStats"></div>
     </div>
 
-    <input 
-  type="text" 
-  id="searchInput" 
-  placeholder="Search by title or topic..." 
-  class="search-bar"
-/>
+    <!-- Search -->
+    <input
+      type="text"
+      id="searchInput"
+      placeholder="Search by title, topic or tag... (Press / to focus)"
+      class="search-bar"
+    />
 
+    <!-- Status Filter -->
+    <div class="filter-box" id="statusFilter">
+      <button data-filter="all" class="active">All</button>
+      <button data-filter="solved">Solved</button>
+      <button data-filter="unsolved">Unsolved</button>
+    </div>
 
-    <!-- Filter Buttons -->
-    <div class="filter-box">
-      <button onclick="filterQuestions('all')">All</button>
-      <button onclick="filterQuestions('solved')">Solved</button>
-      <button onclick="filterQuestions('unsolved')">Unsolved</button>
+    <!-- Difficulty Filter -->
+    <div class="filter-box diff-filter" id="diffFilter">
+      <button data-difficulty="all" class="active">All Difficulties</button>
+      <button data-difficulty="Easy" class="diff-easy">Easy</button>
+      <button data-difficulty="Medium" class="diff-medium">Medium</button>
+      <button data-difficulty="Hard" class="diff-hard">Hard</button>
+    </div>
+
+    <!-- Controls: Sort + Group + Select -->
+    <div class="controls-row">
+      <select id="sortSelect" class="sort-select">
+        <option value="default">Sort: Default</option>
+        <option value="title-asc">Title A&#x2192;Z</option>
+        <option value="title-desc">Title Z&#x2192;A</option>
+        <option value="diff-asc">Difficulty: Easy first</option>
+        <option value="diff-desc">Difficulty: Hard first</option>
+      </select>
+      <button id="groupToggle" class="btn-secondary">Group by Topic</button>
+      <button id="bulkToggle" class="btn-secondary">Select</button>
+    </div>
+
+    <!-- Bulk Action Bar -->
+    <div class="bulk-bar" id="bulkBar">
+      <span id="selectedCount">0 selected</span>
+      <button id="bulkSolve">Mark Solved</button>
+      <button id="bulkUnsolve">Mark Unsolved</button>
+      <button id="bulkDelete" class="btn-danger">Delete</button>
+      <button id="bulkCancel" class="btn-secondary">Cancel</button>
     </div>
 
     <!-- Question List -->
     <div id="questionList"></div>
+
+    <!-- Export / Import -->
+    <div class="portability-box">
+      <button id="exportBtn" class="btn-secondary">&#x2B07; Export JSON</button>
+      <button id="importBtn" class="btn-secondary">&#x2B06; Import JSON</button>
+      <input type="file" id="importFile" accept=".json" style="display:none;" />
+    </div>
+
+    <div class="shortcuts-hint" title="/ = focus search | Ctrl+Enter = add question | Esc = close modal / clear search">
+      &#9000; Keyboard shortcuts available
+    </div>
 
   </div>
 
