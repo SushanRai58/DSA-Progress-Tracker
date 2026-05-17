@@ -4,175 +4,245 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>DSA Progress Tracker</title>
+  
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+  <script>
+    tailwind.config = {
+      darkMode: ['selector', '[data-theme="dark"]'],
+      theme: {
+        extend: {
+          colors: {
+            'dsa-dark': '#050a0f',
+            'dsa-card': '#1a1d21',
+            'dsa-accent': '#2c323a',
+            'dsa-easy': '#22c55e',
+            'dsa-medium': '#eab308',
+            'dsa-hard': '#ef4444',
+            'dsa-blue': '#3b82f6'
+          }
+        }
+      }
+    }
+  </script>
   <link rel="stylesheet" href="style.css" />
 </head>
-<body>
+<body class="bg-slate-50 dark:bg-dsa-dark text-slate-800 dark:text-slate-100 font-sans transition-colors duration-200">
 
-  <!-- Edit Modal (outside .container to avoid clip) -->
+  <!-- Modals -->
   <div class="modal-overlay" id="editModal">
     <div class="modal-box">
-      <button class="modal-close" id="modalClose">&#x2715;</button>
-      <h2>Edit Question</h2>
-      <input type="text" id="editTitle" placeholder="Question Title" />
+      <button class="modal-close" id="modalClose"><i class="fa-solid fa-xmark"></i></button>
+      <h2 class="font-bold text-lg mb-4">Edit Question</h2>
+      <input type="text" id="editTitle" class="form-input" placeholder="Question Title" />
       <span class="error-msg" id="editTitleError"></span>
-      <input type="text" id="editTopic" placeholder="Topic" />
+      <input type="text" id="editTopic" class="form-input" placeholder="Topic" />
       <span class="error-msg" id="editTopicError"></span>
-      <select id="editDifficulty">
+      <select id="editDifficulty" class="form-input">
         <option value="Easy">Easy</option>
         <option value="Medium">Medium</option>
         <option value="Hard">Hard</option>
       </select>
-      <input type="text" id="editTags" placeholder="Tags (comma-separated)" />
-      <textarea id="editNotes" placeholder="Notes (optional)" rows="3"></textarea>
-      <button id="modalSave">Save Changes</button>
+      <input type="text" id="editTags" class="form-input" placeholder="Tags (comma-separated)" />
+      <textarea id="editNotes" class="form-input" placeholder="Notes (optional)" rows="3"></textarea>
+      <button id="modalSave" class="btn-primary w-full mt-3">Save Changes</button>
     </div>
   </div>
 
-  <!-- Confirm Modal (used for import) -->
   <div class="modal-overlay" id="confirmModal">
-    <div class="modal-box confirm-box">
-      <h2 id="confirmTitle">Confirm</h2>
-      <p id="confirmMessage"></p>
-      <div class="confirm-buttons">
-        <button id="confirmYes">Yes</button>
-        <button id="confirmNo" class="btn-danger">No</button>
+    <div class="modal-box text-center">
+      <h2 id="confirmTitle" class="font-bold text-lg mb-2">Confirm</h2>
+      <p id="confirmMessage" class="text-slate-500 dark:text-slate-400 mb-6"></p>
+      <div class="flex gap-3 justify-center">
+        <button id="confirmYes" class="btn-primary min-w-[100px]">Yes</button>
+        <button id="confirmNo" class="btn-danger min-w-[100px]">No</button>
       </div>
     </div>
   </div>
 
-  <div class="container">
+  <!-- Main Container -->
+  <div class="max-w-[768px] mx-auto min-h-screen flex flex-col pb-24 shadow-2xl relative bg-white dark:bg-dsa-dark overflow-x-hidden border-x border-slate-200 dark:border-white/5">
+    
+    <!-- Header -->
+    <header class="p-5 flex justify-between items-center bg-slate-100 dark:bg-[#0f172a] sticky top-0 z-50 border-b border-slate-200 dark:border-white/5">
+      <div class="w-8"></div>
+      <h1 class="text-xl font-bold tracking-tight">DSA Tracker</h1>
+      <button id="themeToggle" class="text-xl text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-colors">&#9728;</button>
+    </header>
 
-    <div class="header-row">
-      <h1>DSA Progress Tracker</h1>
-      <button id="themeToggle" class="icon-btn" title="Toggle dark mode">&#9728;</button>
-    </div>
-
-    <!-- Add Question Form -->
-    <div class="form-box">
-      <input type="text" id="title" placeholder="Question Title (e.g., Two Sum)" />
-      <span class="error-msg" id="titleError"></span>
-
-      <input type="text" id="topic" placeholder="Topic (Array, String, DP...)" />
-      <span class="error-msg" id="topicError"></span>
-
-      <select id="difficulty">
-        <option value="Easy">Easy</option>
-        <option value="Medium">Medium</option>
-        <option value="Hard">Hard</option>
-      </select>
-
-      <input type="text" id="tags" placeholder="Tags (comma-separated, e.g. BFS, Graph)" />
-
-      <textarea id="notes" placeholder="Notes (optional)" rows="2"></textarea>
-
-      <div class="form-actions">
-        <button id="addBtn">Add Question</button>
-        <button id="quickAddToggle" class="btn-secondary">Quick Add</button>
-      </div>
-    </div>
-
-    <!-- Quick Add Row (hidden by default) -->
-    <div class="quick-add-row" id="quickAddRow">
-      <input type="text" id="qaTitle" placeholder="Title" />
-      <input type="text" id="qaTopic" placeholder="Topic" />
-      <select id="qaDifficulty">
-        <option value="Easy">Easy</option>
-        <option value="Medium" selected>Medium</option>
-        <option value="Hard">Hard</option>
-      </select>
-      <button id="qaAdd">+ Add</button>
-    </div>
-
-    <!-- Progress / Stats Section -->
-    <div class="progress-box">
-      <div class="stats-top">
-        <div class="stat-item">
-          <span class="stat-label">Total</span>
-          <span class="stat-value" id="totalCount">0</span>
+    <!-- HeroStats -->
+    <section class="hero-gradient px-6 pt-6 pb-8 flex flex-col items-center border-b border-slate-200 dark:border-white/5">
+      <div class="grid grid-cols-3 w-full gap-4 items-center mb-6">
+        
+        <!-- Active Streak -->
+        <div class="flex flex-col items-center justify-center">
+          <div class="flex items-center gap-1">
+            <span class="text-3xl font-bold" id="streakCount">0 &#128293;</span>
+          </div>
+          <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-wider font-bold">Active Streak</p>
         </div>
-        <div class="stat-item">
-          <span class="stat-label">Solved</span>
-          <span class="stat-value" id="solvedCount">0</span>
+        
+        <!-- Overall Progress -->
+        <div class="flex flex-col items-center justify-center">
+          <div class="circular-progress">
+            <span class="relative z-10 text-2xl font-bold" id="progressPercent">0%</span>
+          </div>
+          <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-2 uppercase tracking-wider font-bold">Overall Progress</p>
         </div>
-        <div class="stat-item">
-          <span class="stat-label">Progress</span>
-          <span class="stat-value" id="progressPercent">0%</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-label">Streak</span>
-          <span class="stat-value" id="streakCount">0 &#128293;</span>
+        
+        <!-- Difficulty Breakdown -->
+        <div class="flex flex-col gap-3 w-full">
+          <div class="space-y-1">
+            <div class="flex justify-between text-[10px] text-slate-600 dark:text-slate-300 font-bold">
+              <span id="easyStats">Easy: 0/0</span>
+            </div>
+            <div class="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden flex">
+              <div class="h-full bg-dsa-easy w-full"></div>
+            </div>
+          </div>
+          <div class="space-y-1">
+            <div class="flex justify-between text-[10px] text-slate-600 dark:text-slate-300 font-bold">
+              <span id="mediumStats">Medium: 0/0</span>
+            </div>
+            <div class="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden flex">
+              <div class="h-full bg-dsa-medium w-full"></div>
+            </div>
+          </div>
+          <div class="space-y-1">
+            <div class="flex justify-between text-[10px] text-slate-600 dark:text-slate-300 font-bold">
+              <span id="hardStats">Hard: 0/0</span>
+            </div>
+            <div class="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden flex">
+              <div class="h-full bg-dsa-hard w-full"></div>
+            </div>
+          </div>
         </div>
       </div>
-      <div class="progress-track">
-        <div class="progress-fill" id="progressBar" style="width:0%"></div>
+      
+      <!-- Linear Progress Bar & Basic Stats -->
+      <div class="w-full bg-slate-100 dark:bg-black/30 rounded-xl p-4 border border-slate-200 dark:border-white/5">
+        <div class="flex justify-between text-sm font-bold mb-2">
+          <div><span class="text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider mr-2">Total</span><span id="totalCount">0</span></div>
+          <div><span class="text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider mr-2">Solved</span><span id="solvedCount">0</span></div>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="progressBar" style="width:0%"></div>
+        </div>
+        <div class="topic-stats hidden" id="topicStats"></div>
       </div>
-      <div class="diff-stats">
-        <span class="stat-pill pill-easy" id="easyStats">Easy: 0/0</span>
-        <span class="stat-pill pill-medium" id="mediumStats">Medium: 0/0</span>
-        <span class="stat-pill pill-hard" id="hardStats">Hard: 0/0</span>
+
+      <!-- Activity Heatmap -->
+      <div class="w-full bg-slate-100 dark:bg-black/30 rounded-xl p-4 border border-slate-200 dark:border-white/5 mt-4" id="activityHeatmapContainer">
+        <div class="grid grid-flow-col grid-rows-7 gap-1 h-20 w-full overflow-x-auto no-scrollbar" id="activityHeatmapGrid">
+          <!-- Squares generated by JS -->
+        </div>
+        <p class="text-center text-[10px] text-slate-500 mt-3 uppercase tracking-widest font-bold">Activity Heatmap</p>
       </div>
-      <div class="topic-stats" id="topicStats"></div>
-    </div>
+    </section>
 
-    <!-- Search -->
-    <input
-      type="text"
-      id="searchInput"
-      placeholder="Search by title, topic or tag... (Press / to focus)"
-      class="search-bar"
-    />
+    <!-- Main Content -->
+    <main class="flex-1 px-4 space-y-6 pt-6">
+      
+      <!-- Add Question Form -->
+      <div class="bg-slate-100 dark:bg-dsa-card p-4 rounded-xl border border-slate-200 dark:border-white/5 space-y-3">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Add New Question</h2>
+        <div>
+          <input type="text" id="title" class="form-input" placeholder="Question Title (e.g., Two Sum)" />
+          <span class="error-msg" id="titleError"></span>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <input type="text" id="topic" class="form-input" placeholder="Topic (Array, DP...)" />
+            <span class="error-msg" id="topicError"></span>
+          </div>
+          <div>
+            <select id="difficulty" class="form-input">
+              <option value="Easy">Easy</option>
+              <option value="Medium">Medium</option>
+              <option value="Hard">Hard</option>
+            </select>
+          </div>
+        </div>
+        <input type="text" id="tags" class="form-input" placeholder="Tags (comma-separated, e.g. BFS, Graph)" />
+        <textarea id="notes" class="form-input" placeholder="Notes (optional)" rows="2"></textarea>
+        
+        <div class="flex gap-2 pt-1">
+          <button id="addBtn" class="btn-primary flex-1">Add Question</button>
+          <button id="quickAddToggle" class="btn-secondary flex-1">Quick Add</button>
+        </div>
+      </div>
 
-    <!-- Status Filter -->
-    <div class="filter-box" id="statusFilter">
-      <button data-filter="all" class="active">All</button>
-      <button data-filter="solved">Solved</button>
-      <button data-filter="unsolved">Unsolved</button>
-    </div>
+      <!-- Quick Add Row -->
+      <div class="quick-add-row" id="quickAddRow">
+        <input type="text" id="qaTitle" class="form-input" placeholder="Title" />
+        <input type="text" id="qaTopic" class="form-input" placeholder="Topic" />
+        <select id="qaDifficulty" class="form-input min-w-[100px]">
+          <option value="Easy">Easy</option>
+          <option value="Medium" selected>Medium</option>
+          <option value="Hard">Hard</option>
+        </select>
+        <button id="qaAdd" class="btn-primary whitespace-nowrap">+ Add</button>
+      </div>
 
-    <!-- Difficulty Filter -->
-    <div class="filter-box diff-filter" id="diffFilter">
-      <button data-difficulty="all" class="active">All Difficulties</button>
-      <button data-difficulty="Easy" class="diff-easy">Easy</button>
-      <button data-difficulty="Medium" class="diff-medium">Medium</button>
-      <button data-difficulty="Hard" class="diff-hard">Hard</button>
-    </div>
+      <!-- Search -->
+      <div class="relative">
+        <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+        <input type="text" id="searchInput" class="w-full bg-slate-100 dark:bg-dsa-card border border-slate-200 dark:border-white/5 rounded-xl py-3 pl-11 pr-4 text-sm focus:ring-2 focus:ring-dsa-blue placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none transition-all" placeholder="Search questions, topics, tags... (Press /)" />
+      </div>
 
-    <!-- Controls: Sort + Group + Select -->
-    <div class="controls-row">
-      <select id="sortSelect" class="sort-select">
-        <option value="default">Sort: Default</option>
-        <option value="title-asc">Title A&#x2192;Z</option>
-        <option value="title-desc">Title Z&#x2192;A</option>
-        <option value="diff-asc">Difficulty: Easy first</option>
-        <option value="diff-desc">Difficulty: Hard first</option>
-      </select>
-      <button id="groupToggle" class="btn-secondary">Group by Topic</button>
-      <button id="bulkToggle" class="btn-secondary">Select</button>
-    </div>
+      <!-- Filters -->
+      <div class="space-y-2">
+        <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1" id="statusFilter">
+          <button data-filter="all" class="filter-btn active">All</button>
+          <button data-filter="solved" class="filter-btn">Solved</button>
+          <button data-filter="unsolved" class="filter-btn">Unsolved</button>
+        </div>
+        
+        <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1 diff-filter" id="diffFilter">
+          <button data-difficulty="all" class="filter-btn active">All Difficulties</button>
+          <button data-difficulty="Easy" class="filter-btn diff-easy">Easy</button>
+          <button data-difficulty="Medium" class="filter-btn diff-medium">Medium</button>
+          <button data-difficulty="Hard" class="filter-btn diff-hard">Hard</button>
+        </div>
+      </div>
 
-    <!-- Bulk Action Bar -->
-    <div class="bulk-bar" id="bulkBar">
-      <span id="selectedCount">0 selected</span>
-      <button id="bulkSolve">Mark Solved</button>
-      <button id="bulkUnsolve">Mark Unsolved</button>
-      <button id="bulkDelete" class="btn-danger">Delete</button>
-      <button id="bulkCancel" class="btn-secondary">Cancel</button>
-    </div>
+      <!-- Controls -->
+      <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1 items-center controls-row">
+        <select id="sortSelect" class="form-input !py-1.5 !w-auto text-sm">
+          <option value="default">Sort: Default</option>
+          <option value="title-asc">Title A&rarr;Z</option>
+          <option value="title-desc">Title Z&rarr;A</option>
+          <option value="diff-asc">Difficulty: Easy first</option>
+          <option value="diff-desc">Difficulty: Hard first</option>
+        </select>
+        <button id="groupToggle" class="btn-secondary text-sm whitespace-nowrap">Group by Topic</button>
+        <button id="bulkToggle" class="btn-secondary text-sm whitespace-nowrap">Select</button>
+      </div>
 
-    <!-- Question List -->
-    <div id="questionList"></div>
+      <!-- Bulk Action Bar -->
+      <div class="bulk-bar" id="bulkBar">
+        <span id="selectedCount">0 selected</span>
+        <button id="bulkSolve" class="btn-primary">Mark Solved</button>
+        <button id="bulkUnsolve" class="btn-secondary">Mark Unsolved</button>
+        <button id="bulkDelete" class="btn-danger">Delete</button>
+        <button id="bulkCancel" class="btn-secondary">Cancel</button>
+      </div>
 
-    <!-- Export / Import -->
-    <div class="portability-box">
-      <button id="exportBtn" class="btn-secondary">&#x2B07; Export JSON</button>
-      <button id="importBtn" class="btn-secondary">&#x2B06; Import JSON</button>
-      <input type="file" id="importFile" accept=".json" style="display:none;" />
-    </div>
+      <!-- Question List -->
+      <div id="questionList" class="space-y-3"></div>
 
-    <div class="shortcuts-hint" title="/ = focus search | Ctrl+Enter = add question | Esc = close modal / clear search">
-      &#9000; Keyboard shortcuts available
-    </div>
+      <!-- Export/Import -->
+      <div class="flex gap-3 pt-6 pb-2">
+        <button id="exportBtn" class="btn-secondary flex-1 text-sm"><i class="fa-solid fa-download mr-1"></i> Export JSON</button>
+        <button id="importBtn" class="btn-secondary flex-1 text-sm"><i class="fa-solid fa-upload mr-1"></i> Import JSON</button>
+        <input type="file" id="importFile" accept=".json" class="hidden" />
+      </div>
 
+      <div class="text-center text-xs text-slate-400 dark:text-slate-500 pb-6">
+        <i class="fa-regular fa-keyboard mr-1"></i> / = search | Ctrl+Enter = add | Esc = close
+      </div>
+      
+    </main>
   </div>
 
   <script src="script.js"></script>

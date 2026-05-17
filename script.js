@@ -266,32 +266,53 @@ function renderQuestions(list) {
 }
 
 function createCard(q) {
-  const div = document.createElement("div");
-  div.className = "question-card" + (q.solved ? " solved" : "");
+  const div = document.createElement("article");
+  let tailwindClasses = "question-card bg-white dark:bg-dsa-card p-4 rounded-2xl flex flex-col gap-2 hover:bg-slate-50 dark:hover:bg-dsa-accent transition-all border border-slate-200 dark:border-white/5 relative";
+  if (q.solved) tailwindClasses += " solved";
+  div.className = tailwindClasses;
   div.dataset.id = q.id;
 
   const tagBadges = (q.tags || [])
-    .map(t => `<span class="tag-badge" data-tag="${t}">${t}</span>`)
+    .map(t => `<span class="tag-badge bg-dsa-blue/10 text-dsa-blue border border-dsa-blue/20 rounded-full px-2 py-0.5 text-[10px] font-bold cursor-pointer hover:bg-dsa-blue/20 transition-colors inline-block" data-tag="${t}">${t}</span>`)
     .join("");
-  const tagsHtml = tagBadges ? `<div class="card-tags">${tagBadges}</div>` : "";
-  const notesHtml = q.notes ? `<div class="card-notes">📝 ${q.notes}</div>` : "";
+  const tagsHtml = tagBadges ? `<div class="card-tags flex flex-wrap gap-1 mt-1">${tagBadges}</div>` : "";
+  const notesHtml = q.notes ? `<div class="card-notes text-xs text-slate-500 dark:text-slate-400 mt-1 bg-slate-50 dark:bg-[#0f172a] p-2 rounded-lg border border-slate-200 dark:border-white/5"><i class="fa-solid fa-pen-to-square mr-1 opacity-50"></i>${q.notes}</div>` : "";
   const checked = selectedIds.has(q.id) ? "checked" : "";
+  
+  const diffColors = {
+    Easy: "bg-dsa-easy/10 text-dsa-easy border-dsa-easy/20",
+    Medium: "bg-dsa-medium/10 text-dsa-medium border-dsa-medium/20",
+    Hard: "bg-dsa-hard/10 text-dsa-hard border-dsa-hard/20"
+  };
+  const diffClass = diffColors[q.difficulty] || diffColors.Easy;
+
+  const statusHtml = q.solved 
+    ? `<div class="flex items-center gap-1.5 text-dsa-easy text-xs font-bold"><i class="fa-solid fa-check-circle"></i><span class="card-status">Solved</span></div>`
+    : `<div class="flex items-center gap-1.5 text-slate-500 text-xs font-bold"><i class="fa-regular fa-clock"></i><span class="card-status">Unsolved</span></div>`;
+    
+  const dateHtml = q.solvedDate 
+    ? `<span class="text-xs text-slate-500 dark:text-slate-600 font-medium">${new Date(q.solvedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>`
+    : "";
 
   div.innerHTML = `
-    <div class="card-header">
-      <input type="checkbox" class="card-checkbox" data-id="${q.id}" ${checked} />
-      <span class="card-title">${q.title}</span>
+    <div class="card-header flex justify-between items-start gap-2">
+      <div class="flex items-start gap-2">
+        <input type="checkbox" class="card-checkbox w-4 h-4 mt-1 accent-dsa-blue" data-id="${q.id}" ${checked} />
+        <h3 class="card-title font-bold text-lg leading-tight text-slate-800 dark:text-slate-100">${q.title}</h3>
+      </div>
+      <span class="diff-label px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${diffClass}">${q.difficulty}</span>
     </div>
-    <div class="card-meta">
-      ${q.topic}&nbsp;&middot;&nbsp;<span class="diff-label ${q.difficulty}">${q.difficulty}</span>
-    </div>
-    ${notesHtml}
+    <p class="text-sm text-slate-500 dark:text-slate-400 font-medium">${q.topic}</p>
     ${tagsHtml}
-    <div class="card-status">${q.solved ? "✅ Solved" : "❌ Unsolved"}</div>
-    <div class="card-actions">
-      <button data-action="toggle" data-id="${q.id}">${q.solved ? "Mark Unsolved" : "Mark Solved"}</button>
-      <button class="btn-edit" data-action="edit" data-id="${q.id}">Edit</button>
-      <button class="btn-delete" data-action="delete" data-id="${q.id}">Delete</button>
+    ${notesHtml}
+    <div class="flex justify-between items-center mt-2 pt-2 border-t border-slate-200 dark:border-white/5">
+      ${statusHtml}
+      ${dateHtml}
+    </div>
+    <div class="card-actions flex gap-2 mt-3 w-full">
+      <button class="flex-1 py-1.5 px-2 text-xs font-bold rounded-lg border border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-black/20 hover:bg-slate-200 dark:hover:bg-black/40 transition-colors text-slate-600 dark:text-slate-300" data-action="toggle" data-id="${q.id}">${q.solved ? "Unsolve" : "Solve"}</button>
+      <button class="btn-edit flex-1 py-1.5 px-2 text-xs font-bold rounded-lg border border-dsa-medium/30 bg-dsa-medium/10 text-dsa-medium hover:bg-dsa-medium/20 transition-colors" data-action="edit" data-id="${q.id}">Edit</button>
+      <button class="btn-delete flex-1 py-1.5 px-2 text-xs font-bold rounded-lg border border-dsa-hard/30 bg-dsa-hard/10 text-dsa-hard hover:bg-dsa-hard/20 transition-colors" data-action="delete" data-id="${q.id}">Delete</button>
     </div>
   `;
 
@@ -440,6 +461,43 @@ function updateStats() {
     : "";
 
   document.getElementById("streakCount").textContent = computeStreak() + " 🔥";
+
+  renderActivityHeatmap();
+}
+
+function renderActivityHeatmap() {
+  const heatmapGrid = document.getElementById("activityHeatmapGrid");
+  if (!heatmapGrid) return;
+
+  // Calculate solved counts per day
+  const dateCounts = {};
+  questions.filter(q => q.solved && q.solvedDate).forEach(q => {
+    const d = q.solvedDate.slice(0, 10);
+    dateCounts[d] = (dateCounts[d] || 0) + 1;
+  });
+
+  // Generate the last 350 days (7 rows x 50 cols)
+  let html = "";
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  
+  // Create an array of 350 days, ending at today
+  for (let i = 349; i >= 0; i--) {
+    const date = new Date(today);
+    date.setDate(date.getDate() - i);
+    const dateStr = date.toISOString().slice(0, 10);
+    const count = dateCounts[dateStr] || 0;
+    
+    // Determine opacity based on count
+    let opacity = 0.1; // Default faint square
+    if (count === 1) opacity = 0.4;
+    else if (count === 2) opacity = 0.7;
+    else if (count >= 3) opacity = 1.0;
+
+    html += `<div class="w-2 h-2 rounded-[2px]" style="background-color: rgba(34, 197, 94, ${opacity})" title="${dateStr}: ${count} solved"></div>`;
+  }
+
+  heatmapGrid.innerHTML = html;
 }
 
 // ── Streak ────────────────────────────────────────────────────────────────────

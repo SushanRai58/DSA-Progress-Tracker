@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>DSA Tracker Dashboard</title>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Font Awesome for Icons -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            'dsa-dark': '#050a0f',
+            'dsa-card': '#1a1d21',
+            'dsa-accent': '#2c323a',
+            'dsa-easy': '#22c55e',
+            'dsa-medium': '#eab308',
+            'dsa-hard': '#ef4444',
+            'dsa-blue': '#3b82f6'
+          }
+        }
+      }
+    }
+  </script>
+<style data-purpose="custom-gradients">
+    .hero-gradient {
+      background: linear-gradient(180deg, #0f172a 0%, #050a0f 100%);
+    }
+    .circular-progress {
+      position: relative;
+      height: 100px;
+      width: 100px;
+      border-radius: 50%;
+      background: conic-gradient(#22c55e 25%, #1e293b 0);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .circular-progress::before {
+      content: "";
+      position: absolute;
+      height: 80px;
+      width: 80px;
+      border-radius: 50%;
+      background-color: #0f172a;
+    }
+  </style>
+<style data-purpose="scrollbar-hide">
+    /* Hide scrollbar for Chrome, Safari and Opera */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    /* Hide scrollbar for IE, Edge and Firefox */
+    .no-scrollbar {
+      -ms-overflow-style: none;  /* IE and Edge */
+      scrollbar-width: none;  /* Firefox */
+    }
+  </style>
+</head>
+<body class="bg-dsa-dark text-slate-100 font-sans selection:bg-blue-500/30">
+<!-- BEGIN: MainContainer -->
+<div class="max-w-[768px] mx-auto min-h-screen flex flex-col pb-24 shadow-2xl relative bg-dsa-dark overflow-x-hidden">
+<!-- BEGIN: Header -->
+<header class="p-5 flex justify-between items-center bg-[#0f172a] sticky top-0 z-50">
+<div class="w-8"></div> <!-- Spacer for centering -->
+<h1 class="text-xl font-bold tracking-tight">DSA Tracker</h1>
+<button class="text-slate-400 hover:text-white transition-colors" data-purpose="settings-button">
+<i class="fa-solid fa-gear text-xl"></i>
+</button>
+</header>
+<!-- END: Header -->
+<!-- BEGIN: HeroStats -->
+<section class="hero-gradient px-6 pt-2 pb-8 flex flex-col items-center">
+<div class="grid grid-cols-3 w-full gap-4 items-center mb-8">
+<!-- Active Streak -->
+<div class="flex flex-col items-center justify-center" data-purpose="streak-counter">
+<div class="flex items-center gap-1">
+<span class="text-3xl">🔥</span>
+<span class="text-4xl font-bold">7</span>
+</div>
+<p class="text-xs text-slate-400 mt-1 uppercase tracking-wider font-semibold">Active Streak</p>
+</div>
+<!-- Overall Progress Circle -->
+<div class="flex flex-col items-center justify-center" data-purpose="overall-progress">
+<div class="circular-progress">
+<span class="relative z-10 text-2xl font-bold">25%</span>
+</div>
+<p class="text-xs text-slate-400 mt-2 uppercase tracking-wider font-semibold">Overall Progress</p>
+</div>
+<!-- Difficulty Breakdown -->
+<div class="flex flex-col gap-3" data-purpose="difficulty-bars">
+<div class="space-y-1">
+<div class="flex justify-between text-[10px] text-slate-300 font-medium">
+<span>Easy: 10/40</span>
+</div>
+<div class="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-dsa-easy w-1/4"></div>
+</div>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between text-[10px] text-slate-300 font-medium">
+<span>Medium: 10/100</span>
+</div>
+<div class="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-dsa-medium w-[10%]"></div>
+</div>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between text-[10px] text-slate-300 font-medium">
+<span>Hard: 5/60</span>
+</div>
+<div class="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-dsa-hard w-[8%]"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- BEGIN: Activity Heatmap -->
+<div class="w-full bg-black/30 rounded-xl p-4 border border-white/5" data-purpose="activity-heatmap">
+<div class="grid grid-flow-col grid-rows-7 gap-1 h-20 w-full overflow-x-auto no-scrollbar">
+<!-- Generating random-ish heatmap squares for visual effect -->
+<script data-purpose="heatmap-generator">
+            // This script would normally run once to render squares
+            document.write([...Array(350)].map(() => {
+              const opacity = [0.1, 0.3, 0.6, 0.9][Math.floor(Math.random() * 4)];
+              return `<div class="w-2 h-2 rounded-sm" style="background-color: rgba(34, 197, 94, ${opacity})"></div>`;
+            }).join(''));
+          </script>
+</div>
+<p class="text-center text-[10px] text-slate-500 mt-3 uppercase tracking-widest font-bold">Activity Heatmap</p>
+</div>
+<!-- END: Activity Heatmap -->
+</section>
+<!-- END: HeroStats -->
+<!-- BEGIN: MainContent -->
+<main class="flex-1 px-4 space-y-4 pt-4">
+<!-- Search and Filter -->
+<div class="space-y-3">
+<div class="relative">
+<i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
+<input class="w-full bg-dsa-card border-none rounded-xl py-3 pl-11 pr-4 text-sm focus:ring-2 focus:ring-blue-500 placeholder:text-slate-500" placeholder="Search questions, topics..." type="text"/>
+</div>
+<div class="flex gap-2 overflow-x-auto no-scrollbar pb-2">
+<button class="px-4 py-1.5 rounded-lg text-sm font-medium bg-blue-600 text-white whitespace-nowrap">All</button>
+<button class="px-4 py-1.5 rounded-lg text-sm font-medium bg-dsa-card text-slate-400 whitespace-nowrap hover:bg-dsa-accent">Solved</button>
+<button class="px-4 py-1.5 rounded-lg text-sm font-medium bg-dsa-card text-slate-400 whitespace-nowrap hover:bg-dsa-accent">Unsolved</button>
+<button class="px-4 py-1.5 rounded-lg text-sm font-medium bg-dsa-card text-slate-400 whitespace-nowrap hover:bg-dsa-accent">Easy</button>
+<button class="px-4 py-1.5 rounded-lg text-sm font-medium bg-dsa-card text-slate-400 whitespace-nowrap hover:bg-dsa-accent">Medium</button>
+<button class="px-4 py-1.5 rounded-lg text-sm font-medium bg-dsa-card text-slate-400 whitespace-nowrap hover:bg-dsa-accent">Hard</button>
+</div>
+</div>
+<!-- Question List -->
+<div class="space-y-3" data-purpose="question-list">
+<!-- Question Card 1 -->
+<article class="bg-dsa-card p-4 rounded-2xl flex flex-col gap-2 hover:bg-dsa-accent transition-all cursor-pointer border border-white/5">
+<div class="flex justify-between items-start">
+<h3 class="font-bold text-lg leading-tight">Two Sum</h3>
+<span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-dsa-easy/10 text-dsa-easy border border-dsa-easy/20">Easy</span>
+</div>
+<p class="text-sm text-slate-500">Array, Hash Table</p>
+<div class="flex justify-between items-center mt-2">
+<div class="flex items-center gap-1.5 text-dsa-easy text-xs font-bold">
+<i class="fa-solid fa-check-circle"></i>
+<span>Solved</span>
+</div>
+<span class="text-xs text-slate-600">Oct 25</span>
+</div>
+</article>
+<!-- Question Card 2 -->
+<article class="bg-dsa-card p-4 rounded-2xl flex flex-col gap-2 hover:bg-dsa-accent transition-all cursor-pointer border border-white/5">
+<div class="flex justify-between items-start">
+<h3 class="font-bold text-lg leading-tight">Longest Substring Without Repeating Characters</h3>
+<span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-dsa-medium/10 text-dsa-medium border border-dsa-medium/20">Medium</span>
+</div>
+<p class="text-sm text-slate-500">String, Sliding Window</p>
+<div class="flex justify-between items-center mt-2">
+<div class="flex items-center gap-1.5 text-slate-500 text-xs font-bold">
+<i class="fa-regular fa-clock"></i>
+<span>Unsolved</span>
+</div>
+</div>
+</article>
+<!-- Question Card 3 -->
+<article class="bg-dsa-card p-4 rounded-2xl flex flex-col gap-2 hover:bg-dsa-accent transition-all cursor-pointer border border-white/5">
+<div class="flex justify-between items-start">
+<h3 class="font-bold text-lg leading-tight">Merge k Sorted Lists</h3>
+<span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-dsa-hard/10 text-dsa-hard border border-dsa-hard/20">Hard</span>
+</div>
+<p class="text-sm text-slate-500">Linked List, Heap</p>
+<div class="flex justify-between items-center mt-2">
+<div class="flex items-center gap-1.5 text-slate-500 text-xs font-bold">
+<i class="fa-regular fa-clock"></i>
+<span>Unsolved</span>
+</div>
+</div>
+</article>
+<!-- Question Card 4 -->
+<article class="bg-dsa-card p-4 rounded-2xl flex flex-col gap-2 hover:bg-dsa-accent transition-all cursor-pointer border border-white/5">
+<div class="flex justify-between items-start">
+<h3 class="font-bold text-lg leading-tight">Valid Parentheses</h3>
+<span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-dsa-easy/10 text-dsa-easy border border-dsa-easy/20">Easy</span>
+</div>
+<p class="text-sm text-slate-500">Stack, String</p>
+<div class="flex justify-between items-center mt-2">
+<div class="flex items-center gap-1.5 text-dsa-easy text-xs font-bold">
+<i class="fa-solid fa-check-circle"></i>
+<span>Solved</span>
+</div>
+<span class="text-xs text-slate-600">Oct 26</span>
+</div>
+</article>
+<!-- Question Card 5 -->
+<article class="bg-dsa-card p-4 rounded-2xl flex flex-col gap-2 hover:bg-dsa-accent transition-all cursor-pointer border border-white/5">
+<div class="flex justify-between items-start">
+<h3 class="font-bold text-lg leading-tight">Maximum Subarray</h3>
+<span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-dsa-medium/10 text-dsa-medium border border-dsa-medium/20">Medium</span>
+</div>
+<p class="text-sm text-slate-500">Array, DP</p>
+<div class="flex justify-between items-center mt-2">
+<div class="flex items-center gap-1.5 text-slate-500 text-xs font-bold">
+<i class="fa-regular fa-clock"></i>
+<span>Unsolved</span>
+</div>
+</div>
+</article>
+</div>
+</main>
+<!-- END: MainContent -->
+<!-- BEGIN: NavigationBar -->
+<nav class="fixed bottom-0 w-full max-w-[768px] bg-[#0f172a]/95 backdrop-blur-md border-t border-slate-800 flex justify-around items-center py-4 px-6 z-50">
+<a class="flex flex-col items-center gap-1 text-blue-500" data-purpose="nav-dashboard" href="#">
+<i class="fa-solid fa-house text-xl"></i>
+<span class="text-[10px] font-bold">Dashboard</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-500 hover:text-slate-300" data-purpose="nav-questions" href="#">
+<i class="fa-solid fa-list-ul text-xl"></i>
+<span class="text-[10px] font-bold">Questions</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-500 hover:text-slate-300" data-purpose="nav-profile" href="#">
+<i class="fa-solid fa-circle-user text-xl"></i>
+<span class="text-[10px] font-bold">Profile</span>
+</a>
+</nav>
+<!-- END: NavigationBar -->
+</div>
+<!-- END: MainContainer -->
+</body></html>
