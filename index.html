@@ -84,7 +84,7 @@
         
         <!-- Overall Progress -->
         <div class="flex flex-col items-center justify-center">
-          <div class="circular-progress">
+          <div class="circular-progress" id="circularProgress">
             <span class="relative z-10 text-2xl font-bold" id="progressPercent">0%</span>
           </div>
           <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-2 uppercase tracking-wider font-bold">Overall Progress</p>
@@ -97,7 +97,7 @@
               <span id="easyStats">Easy: 0/0</span>
             </div>
             <div class="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden flex">
-              <div class="h-full bg-dsa-easy w-full"></div>
+              <div class="h-full bg-dsa-easy transition-all duration-500" id="easyBar" style="width:0%"></div>
             </div>
           </div>
           <div class="space-y-1">
@@ -105,7 +105,7 @@
               <span id="mediumStats">Medium: 0/0</span>
             </div>
             <div class="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden flex">
-              <div class="h-full bg-dsa-medium w-full"></div>
+              <div class="h-full bg-dsa-medium transition-all duration-500" id="mediumBar" style="width:0%"></div>
             </div>
           </div>
           <div class="space-y-1">
@@ -113,7 +113,7 @@
               <span id="hardStats">Hard: 0/0</span>
             </div>
             <div class="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden flex">
-              <div class="h-full bg-dsa-hard w-full"></div>
+              <div class="h-full bg-dsa-hard transition-all duration-500" id="hardBar" style="width:0%"></div>
             </div>
           </div>
         </div>

@@ -431,15 +431,23 @@ function updateStats() {
   const solved  = questions.filter(q => q.solved).length;
   const percent = total === 0 ? 0 : Math.round((solved / total) * 100);
 
-  document.getElementById("totalCount").textContent    = total;
-  document.getElementById("solvedCount").textContent   = solved;
+  document.getElementById("totalCount").textContent      = total;
+  document.getElementById("solvedCount").textContent     = solved;
   document.getElementById("progressPercent").textContent = percent + "%";
   progressBar.style.width = percent + "%";
 
+  // Drive the conic-gradient ring via CSS custom property
+  const circEl = document.getElementById("circularProgress");
+  if (circEl) circEl.style.setProperty("--cp-pct", percent + "%");
+
+  // Update per-difficulty stats text AND progress bar widths
   ["Easy", "Medium", "Hard"].forEach(d => {
     const all = questions.filter(q => q.difficulty === d);
     const s   = all.filter(q => q.solved).length;
+    const pct = all.length === 0 ? 0 : Math.round((s / all.length) * 100);
     document.getElementById(d.toLowerCase() + "Stats").textContent = `${d}: ${s}/${all.length}`;
+    const barEl = document.getElementById(d.toLowerCase() + "Bar");
+    if (barEl) barEl.style.width = pct + "%";
   });
 
   // Topic leaderboard (top 5 by solved count)
@@ -466,38 +474,52 @@ function updateStats() {
 }
 
 function renderActivityHeatmap() {
-  const heatmapGrid = document.getElementById("activityHeatmapGrid");
-  if (!heatmapGrid) return;
+  const grid = document.getElementById("activityHeatmapGrid");
+  if (!grid) return;
 
-  // Calculate solved counts per day
+  const CELL = 8, GAP = 4, ROWS = 7, WEEKS = 52;
+  const TOTAL_DAYS = WEEKS * ROWS; // 364
+
+  // Explicitly define the grid layout so w-full doesn't squeeze auto-columns to 0
+  grid.style.gridTemplateColumns = `repeat(${WEEKS}, ${CELL}px)`;
+  grid.style.gridTemplateRows    = `repeat(${ROWS}, ${CELL}px)`;
+  grid.style.gridAutoFlow        = "column";
+  grid.style.height              = `${ROWS * CELL + (ROWS - 1) * GAP}px`; // 80px
+
+  // Build date → solved-count lookup
   const dateCounts = {};
   questions.filter(q => q.solved && q.solvedDate).forEach(q => {
-    const d = q.solvedDate.slice(0, 10);
-    dateCounts[d] = (dateCounts[d] || 0) + 1;
+    const day = q.solvedDate.slice(0, 10);
+    dateCounts[day] = (dateCounts[day] || 0) + 1;
   });
 
-  // Generate the last 350 days (7 rows x 50 cols)
-  let html = "";
   const today = new Date();
-  today.setHours(0,0,0,0);
-  
-  // Create an array of 350 days, ending at today
-  for (let i = 349; i >= 0; i--) {
+  today.setHours(0, 0, 0, 0);
+
+  const isDark = document.body.dataset.theme === "dark";
+  const emptyColor = isDark ? "rgba(255,255,255,0.15)" : "rgba(148,163,184,0.4)";
+
+  const fragment = document.createDocumentFragment();
+  for (let i = TOTAL_DAYS - 1; i >= 0; i--) {
     const date = new Date(today);
     date.setDate(date.getDate() - i);
     const dateStr = date.toISOString().slice(0, 10);
     const count = dateCounts[dateStr] || 0;
-    
-    // Determine opacity based on count
-    let opacity = 0.1; // Default faint square
-    if (count === 1) opacity = 0.4;
-    else if (count === 2) opacity = 0.7;
-    else if (count >= 3) opacity = 1.0;
 
-    html += `<div class="w-2 h-2 rounded-[2px]" style="background-color: rgba(34, 197, 94, ${opacity})" title="${dateStr}: ${count} solved"></div>`;
+    let bg;
+    if      (count === 0) bg = emptyColor;
+    else if (count === 1) bg = "rgba(34,197,94,0.4)";
+    else if (count === 2) bg = "rgba(34,197,94,0.7)";
+    else                  bg = "#22c55e";
+
+    const cell = document.createElement("div");
+    cell.style.cssText = `width:${CELL}px;height:${CELL}px;border-radius:2px;background-color:${bg};`;
+    cell.title = `${dateStr}: ${count} solved`;
+    fragment.appendChild(cell);
   }
 
-  heatmapGrid.innerHTML = html;
+  grid.innerHTML = "";
+  grid.appendChild(fragment);
 }
 
 // ── Streak ────────────────────────────────────────────────────────────────────
