@@ -89,7 +89,7 @@ Authorization: Bearer <token>
 | Method | Endpoint | Body | Description |
 |--------|----------|------|-------------|
 | GET | `/api/questions` | — | Get all questions for the logged-in user |
-| POST | `/api/questions` | `{ title, topic, difficulty, tags?, notes?, isSolved?, leetcodeUrl? }` | Create a question |
+| POST | `/api/questions` | `{ title, topic, difficulty, tags?, notes?, solved?, leetcodeUrl? }` | Create a question |
 | PUT | `/api/questions/:id` | Any subset of Question fields | Update a question |
 | DELETE | `/api/questions/:id` | — | Delete a question |
 

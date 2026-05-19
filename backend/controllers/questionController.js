@@ -12,7 +12,7 @@ const getQuestions = async (req, res) => {
 
 // POST /api/questions — create a new question for the authenticated user
 const createQuestion = async (req, res) => {
-  const { title, topic, difficulty, tags, notes, isSolved, solvedDate, leetcodeUrl } = req.body;
+  const { title, topic, difficulty, tags, notes, solved, solvedDate, leetcodeUrl } = req.body;
 
   if (!title || !topic || !difficulty) {
     return res.status(400).json({ message: 'Title, topic, and difficulty are required' });
@@ -25,8 +25,8 @@ const createQuestion = async (req, res) => {
       difficulty,
       tags: tags || [],
       notes: notes || '',
-      isSolved: isSolved || false,
-      solvedDate: isSolved ? solvedDate || new Date() : null,
+      solved: solved || false,
+      solvedDate: solved ? solvedDate || new Date() : null,
       leetcodeUrl: leetcodeUrl || '',
       user: req.user._id,
     });
@@ -55,12 +55,12 @@ const updateQuestion = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to update this question' });
     }
 
-    const { isSolved, solvedDate, ...rest } = req.body;
+    const { solved, solvedDate, ...rest } = req.body;
 
     // Auto-stamp solvedDate when a question is first marked solved
-    if (typeof isSolved !== 'undefined') {
-      rest.isSolved = isSolved;
-      rest.solvedDate = isSolved ? (solvedDate || question.solvedDate || new Date()) : null;
+    if (typeof solved !== 'undefined') {
+      rest.solved = solved;
+      rest.solvedDate = solved ? (solvedDate || question.solvedDate || new Date()) : null;
     }
 
     const updated = await Question.findByIdAndUpdate(

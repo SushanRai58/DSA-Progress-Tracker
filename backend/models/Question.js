@@ -29,7 +29,7 @@ const questionSchema = new mongoose.Schema(
       default: '',
       trim: true,
     },
-    isSolved: {
+    solved: {
       type: Boolean,
       default: false,
     },
