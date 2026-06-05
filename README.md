@@ -1,6 +1,8 @@
 # DSA Progress Tracker
 
-A full-stack web app to track your DSA problem-solving progress — with streak tracking, an activity heatmap, filters, bulk actions, and a LeetCode auto-fill scraper.
+A full-stack web app to track your DSA problem-solving progress — with user accounts, cloud sync, streak tracking, an activity heatmap, filters, bulk actions, and a LeetCode auto-fill scraper.
+
+**Stack:** Vanilla JS + Tailwind CSS frontend · Node.js/Express + MongoDB backend · JWT auth
 
 ## Project Structure
 
@@ -11,29 +13,23 @@ dsa-progress-tracker/
 │   ├── script.js
 │   └── style.css
 ├── backend/                # Node.js / Express / MongoDB API
-│   ├── config/
-│   │   └── db.js
+│   ├── config/db.js
 │   ├── controllers/
-│   │   ├── authController.js
-│   │   ├── questionController.js
-│   │   └── scraperController.js
 │   ├── middleware/
-│   │   └── authMiddleware.js
 │   ├── models/
-│   │   ├── User.js
-│   │   └── Question.js
 │   ├── routes/
-│   │   ├── authRoutes.js
-│   │   ├── questionRoutes.js
-│   │   └── scraperRoutes.js
 │   ├── server.js
+│   ├── .env                # Local secrets (not committed)
+│   ├── .env.example        # Template — copy to .env and fill in
 │   └── package.json
+├── package.json            # Root dev scripts (concurrently)
 ├── .gitignore
 └── README.md
 ```
 
 ## Features
 
+- Register / login with JWT authentication
 - Add, edit, delete DSA questions
 - Mark questions solved / unsolved with one click
 - Difficulty breakdown (Easy / Medium / Hard) with progress bars
@@ -46,28 +42,58 @@ dsa-progress-tracker/
 - Export / import progress as JSON
 - Dark mode
 - LeetCode auto-fill via backend scraper
-- User accounts with JWT authentication
 
-## Running Locally
+## Setup
 
-### Frontend
+### 1. Clone
 
-Open `frontend/index.html` directly in your browser — no build step required.
+```bash
+git clone <repo-url>
+cd dsa-progress-tracker
+```
 
-The frontend currently uses `localStorage` for persistence. To connect it to the backend, point API calls at `http://localhost:5000`.
-
-### Backend
-
-See [backend/README.md](backend/README.md) for full setup instructions.
+### 2. Backend
 
 ```bash
 cd backend
+cp .env.example .env      # then edit .env with your values
 npm install
-# configure backend/.env (see backend/README.md)
-npm run dev
+npm run dev               # starts on http://localhost:5000
 ```
 
-Server runs on `http://localhost:5000`.
+`.env` values to configure:
+
+| Key | Description |
+|-----|-------------|
+| `MONGO_URI` | MongoDB connection string (local or Atlas) |
+| `JWT_SECRET` | Long random string — generate with `node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"` |
+| `PORT` | API port (default `5000`) |
+| `CLIENT_ORIGIN` | Comma-separated frontend origins for CORS |
+
+See [backend/README.md](backend/README.md) for more detail.
+
+### 3. Frontend
+
+Open `frontend/index.html` in VS Code with **Live Server** (serves on `http://127.0.0.1:5500`), or any static file server on port 5500.
+
+### 4. One-command dev (optional)
+
+```bash
+npm install        # installs concurrently
+npm run dev        # starts backend (nodemon) + frontend (live-server)
+```
+
+## API Endpoints
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | `/api/auth/register` | — | Create account |
+| POST | `/api/auth/login` | — | Login, returns JWT |
+| GET | `/api/questions` | JWT | List user's questions |
+| POST | `/api/questions` | JWT | Add question |
+| PUT | `/api/questions/:id` | JWT | Update question |
+| DELETE | `/api/questions/:id` | JWT | Delete question |
+| POST | `/api/scrape/leetcode` | JWT | Fetch LeetCode problem metadata |
 
 ## Tech Stack
 

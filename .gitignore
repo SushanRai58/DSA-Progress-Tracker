@@ -1,9 +1,15 @@
 # Dependencies
 backend/node_modules/
+node_modules/
 
-# Environment variables
+# Environment files (never commit secrets)
 backend/.env
+.env
 
 # OS
 .DS_Store
 Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*

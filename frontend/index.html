@@ -29,6 +29,37 @@
 </head>
 <body class="bg-slate-50 dark:bg-dsa-dark text-slate-800 dark:text-slate-100 font-sans transition-colors duration-200">
 
+  <!-- Auth Overlay -->
+  <div id="authOverlay" class="auth-overlay">
+    <div class="auth-box">
+      <div class="text-center mb-6">
+        <h1 class="text-2xl font-bold tracking-tight mb-1">DSA Tracker</h1>
+        <p class="text-sm text-slate-500 dark:text-slate-400">Sign in to sync your progress across devices</p>
+      </div>
+
+      <div class="auth-tabs">
+        <button id="loginTab" class="auth-tab active">Sign In</button>
+        <button id="registerTab" class="auth-tab">Register</button>
+      </div>
+
+      <form id="loginFormEl">
+        <input type="email" id="loginEmail" class="form-input" placeholder="Email" autocomplete="email" required />
+        <input type="password" id="loginPassword" class="form-input mt-3" placeholder="Password" autocomplete="current-password" required />
+        <p id="loginError" class="error-msg mt-1"></p>
+        <button id="loginSubmit" type="submit" class="btn-primary w-full mt-4">Sign In</button>
+      </form>
+
+      <form id="registerFormEl" style="display:none">
+        <input type="text" id="regName" class="form-input" placeholder="Full Name" autocomplete="name" required />
+        <input type="email" id="regEmail" class="form-input mt-3" placeholder="Email" autocomplete="email" required />
+        <input type="password" id="regPassword" class="form-input mt-3" placeholder="Password (min 6 chars)" autocomplete="new-password" required />
+        <input type="password" id="regConfirm" class="form-input mt-3" placeholder="Confirm Password" autocomplete="new-password" required />
+        <p id="regError" class="error-msg mt-1"></p>
+        <button id="registerSubmit" type="submit" class="btn-primary w-full mt-4">Create Account</button>
+      </form>
+    </div>
+  </div>
+
   <!-- Modals -->
   <div class="modal-overlay" id="editModal">
     <div class="modal-box">
@@ -61,13 +92,18 @@
   </div>
 
   <!-- Main Container -->
-  <div class="max-w-[768px] mx-auto min-h-screen flex flex-col pb-24 shadow-2xl relative bg-white dark:bg-dsa-dark overflow-x-hidden border-x border-slate-200 dark:border-white/5">
-    
+  <div id="mainContent" class="max-w-[768px] mx-auto min-h-screen flex flex-col pb-24 shadow-2xl relative bg-white dark:bg-dsa-dark overflow-x-hidden border-x border-slate-200 dark:border-white/5">
+
     <!-- Header -->
     <header class="p-5 flex justify-between items-center bg-slate-100 dark:bg-[#0f172a] sticky top-0 z-50 border-b border-slate-200 dark:border-white/5">
-      <div class="w-8"></div>
+      <button id="logoutBtn" class="text-sm font-semibold text-slate-500 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors flex items-center gap-1.5" style="display:none">
+        <i class="fa-solid fa-right-from-bracket"></i>
+      </button>
       <h1 class="text-xl font-bold tracking-tight">DSA Tracker</h1>
-      <button id="themeToggle" class="text-xl text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-colors">&#9728;</button>
+      <div class="flex items-center gap-2">
+        <span id="userNameDisplay" class="text-xs font-semibold text-slate-500 dark:text-slate-400 max-w-[80px] truncate" style="display:none"></span>
+        <button id="themeToggle" class="text-xl text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-colors">&#9728;</button>
+      </div>
     </header>
 
     <!-- HeroStats -->
