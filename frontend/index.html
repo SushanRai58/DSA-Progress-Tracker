@@ -92,6 +92,33 @@
     </div>
   </div>
 
+  <!-- Settings Modal -->
+  <div class="modal-overlay" id="settingsModal">
+    <div class="modal-box">
+      <button class="modal-close" id="settingsClose"><i class="fa-solid fa-xmark"></i></button>
+      <h2 class="font-bold text-lg mb-4">Account Settings</h2>
+
+      <label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Name</label>
+      <input type="text" id="settingsName" class="form-input mt-1" placeholder="Your name" />
+
+      <label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-4 block">Daily Goal</label>
+      <div class="flex items-center gap-2 mt-1">
+        <input type="number" id="settingsDailyGoal" class="form-input" placeholder="3" min="1" max="50" style="max-width:90px" />
+        <span class="text-sm text-slate-500 dark:text-slate-400">problems / day</span>
+      </div>
+
+      <div class="mt-4 pt-4 border-t border-slate-200 dark:border-white/5">
+        <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Change Password</p>
+        <input type="password" id="settingsCurrentPwd" class="form-input" placeholder="Current password" autocomplete="current-password" />
+        <input type="password" id="settingsNewPwd" class="form-input mt-2" placeholder="New password (min 6 chars)" autocomplete="new-password" />
+      </div>
+
+      <p id="settingsError" class="error-msg mt-2"></p>
+      <p id="settingsSuccess" class="text-xs text-green-600 dark:text-green-400 min-h-[1rem] mt-1"></p>
+      <button id="settingsSave" class="btn-primary w-full mt-3">Save Changes</button>
+    </div>
+  </div>
+
   <!-- Main Container -->
   <div id="mainContent" class="max-w-[768px] mx-auto min-h-screen flex flex-col pb-24 shadow-2xl relative bg-white dark:bg-dsa-dark overflow-x-hidden border-x border-slate-200 dark:border-white/5">
 
@@ -103,9 +130,19 @@
       <h1 class="text-xl font-bold tracking-tight">DSA Tracker</h1>
       <div class="flex items-center gap-2">
         <span id="userNameDisplay" class="text-xs font-semibold text-slate-500 dark:text-slate-400 max-w-[80px] truncate" style="display:none"></span>
+        <button id="settingsBtn" class="text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-colors" style="display:none" title="Settings"><i class="fa-solid fa-gear text-base"></i></button>
         <button id="themeToggle" class="text-xl text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-colors">&#9728;</button>
       </div>
     </header>
+
+    <!-- Daily Goal Strip -->
+    <div id="goalStrip" class="px-5 py-2 border-b border-slate-200 dark:border-white/5 flex items-center gap-3 bg-slate-50 dark:bg-[#0a0f1a]" style="display:none">
+      <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Today</span>
+      <div class="flex-1 bg-slate-200 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
+        <div id="goalBar" class="h-full bg-dsa-blue rounded-full transition-all duration-500" style="width:0%"></div>
+      </div>
+      <span id="goalLabel" class="text-xs font-bold text-slate-600 dark:text-slate-300 whitespace-nowrap">0/3</span>
+    </div>
 
     <!-- HeroStats -->
     <section class="hero-gradient px-6 pt-6 pb-8 flex flex-col items-center border-b border-slate-200 dark:border-white/5">
@@ -238,6 +275,7 @@
           <button data-filter="all" class="filter-btn active">All</button>
           <button data-filter="solved" class="filter-btn">Solved</button>
           <button data-filter="unsolved" class="filter-btn">Unsolved</button>
+          <button data-filter="review" class="filter-btn">Review</button>
         </div>
         
         <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1 diff-filter" id="diffFilter">

@@ -22,6 +22,12 @@ const userSchema = new mongoose.Schema(
       minlength: [6, 'Password must be at least 6 characters'],
       select: false, // Never return password in query results by default
     },
+    dailyGoal: {
+      type: Number,
+      default: 3,
+      min: [1, 'Daily goal must be at least 1'],
+      max: [50, 'Daily goal cannot exceed 50'],
+    },
   },
   { timestamps: true }
 );

@@ -42,6 +42,14 @@ const questionSchema = new mongoose.Schema(
       default: '',
       trim: true,
     },
+    reviewInterval: {
+      type: Number,
+      default: 1,
+    },
+    nextReview: {
+      type: Date,
+      default: null,
+    },
     // Each question is scoped to a single user — prevents cross-user data leaks
     user: {
       type: mongoose.Schema.Types.ObjectId,

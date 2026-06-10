@@ -22,10 +22,11 @@ const registerUser = async (req, res) => {
     const user = await User.create({ name, email, password });
 
     res.status(201).json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      token: generateToken(user._id),
+      _id:       user._id,
+      name:      user.name,
+      email:     user.email,
+      dailyGoal: user.dailyGoal,
+      token:     generateToken(user._id),
     });
   } catch (error) {
     // Surface Mongoose validation errors cleanly
@@ -55,14 +56,46 @@ const loginUser = async (req, res) => {
     }
 
     res.json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      token: generateToken(user._id),
+      _id:       user._id,
+      name:      user.name,
+      email:     user.email,
+      dailyGoal: user.dailyGoal,
+      token:     generateToken(user._id),
     });
   } catch (error) {
     res.status(500).json({ message: 'Server error during login' });
   }
 };
 
-module.exports = { registerUser, loginUser };
+// PUT /api/auth/profile
+const updateProfile = async (req, res) => {
+  const { name, dailyGoal, currentPassword, newPassword } = req.body;
+  try {
+    const user = await User.findById(req.user._id).select('+password');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    if (name) user.name = name.trim();
+    if (typeof dailyGoal === 'number' && dailyGoal >= 1) user.dailyGoal = dailyGoal;
+
+    if (newPassword) {
+      if (!currentPassword) {
+        return res.status(400).json({ message: 'Current password is required' });
+      }
+      const isMatch = await user.matchPassword(currentPassword);
+      if (!isMatch) {
+        return res.status(401).json({ message: 'Current password is incorrect' });
+      }
+      if (newPassword.length < 6) {
+        return res.status(400).json({ message: 'New password must be at least 6 characters' });
+      }
+      user.password = newPassword;
+    }
+
+    await user.save();
+    res.json({ _id: user._id, name: user.name, email: user.email, dailyGoal: user.dailyGoal });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to update profile' });
+  }
+};
+
+module.exports = { registerUser, loginUser, updateProfile };

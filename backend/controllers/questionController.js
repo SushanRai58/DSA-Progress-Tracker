@@ -55,12 +55,18 @@ const updateQuestion = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to update this question' });
     }
 
-    const { solved, solvedDate, ...rest } = req.body;
+    // Accept both `solved` and legacy `isSolved` field names from the client
+    const { solved: solvedRaw, isSolved, solvedDate, ...rest } = req.body;
+    const solved = solvedRaw !== undefined ? solvedRaw : isSolved;
 
-    // Auto-stamp solvedDate when a question is first marked solved
     if (typeof solved !== 'undefined') {
       rest.solved = solved;
-      rest.solvedDate = solved ? (solvedDate || question.solvedDate || new Date()) : null;
+      const sd = solved ? new Date(solvedDate || question.solvedDate || Date.now()) : null;
+      rest.solvedDate = sd;
+      // Advance the next review date by reviewInterval days when solved; clear it when unsolved
+      rest.nextReview = solved
+        ? new Date(sd.getTime() + (question.reviewInterval || 1) * 24 * 60 * 60 * 1000)
+        : null;
     }
 
     const updated = await Question.findByIdAndUpdate(
@@ -99,4 +105,27 @@ const deleteQuestion = async (req, res) => {
   }
 };
 
-module.exports = { getQuestions, createQuestion, updateQuestion, deleteQuestion };
+// PUT /api/questions/:id/review — mark a question as reviewed; doubles the interval (capped at 30d)
+const reviewQuestion = async (req, res) => {
+  try {
+    const question = await Question.findById(req.params.id);
+    if (!question) return res.status(404).json({ message: 'Question not found' });
+    if (question.user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    const newInterval = Math.min((question.reviewInterval || 1) * 2, 30);
+    const nextReview  = new Date(Date.now() + newInterval * 24 * 60 * 60 * 1000);
+
+    const updated = await Question.findByIdAndUpdate(
+      req.params.id,
+      { $set: { reviewInterval: newInterval, nextReview } },
+      { new: true }
+    );
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to record review' });
+  }
+};
+
+module.exports = { getQuestions, createQuestion, updateQuestion, deleteQuestion, reviewQuestion };

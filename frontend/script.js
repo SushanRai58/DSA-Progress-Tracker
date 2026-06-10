@@ -35,6 +35,11 @@ const mainContent     = document.getElementById('mainContent');
 const lcUrlInput      = document.getElementById('lcUrl');
 const autoFillBtn     = document.getElementById('autoFillBtn');
 const autoFillStatus  = document.getElementById('autoFillStatus');
+const settingsBtn     = document.getElementById('settingsBtn');
+const settingsModal   = document.getElementById('settingsModal');
+const goalStrip       = document.getElementById('goalStrip');
+const goalBar         = document.getElementById('goalBar');
+const goalLabel       = document.getElementById('goalLabel');
 
 // Edit Modal
 const editModal   = document.getElementById('editModal');
@@ -90,7 +95,9 @@ function fromAPI(q) {
     solved:       q.isSolved ?? q.solved ?? false,
     solvedDate:   q.solvedDate ? new Date(q.solvedDate).toISOString() : null,
     createdAt:    new Date(q.createdAt).getTime(),
-    leetcodeUrl:  q.leetcodeUrl || '',
+    leetcodeUrl:    q.leetcodeUrl || '',
+    reviewInterval: q.reviewInterval || 1,
+    nextReview:     q.nextReview ? new Date(q.nextReview).toISOString() : null,
   };
 }
 
@@ -104,8 +111,10 @@ function showApp() {
   authOverlay.classList.remove('active');
   mainContent.style.display = '';
   userNameDisplay.textContent = currentUser?.name || '';
-  userNameDisplay.style.display = currentUser ? 'inline' : 'none';
-  logoutBtn.style.display = currentUser ? 'inline-flex' : 'none';
+  userNameDisplay.style.display     = currentUser ? 'inline' : 'none';
+  logoutBtn.style.display           = currentUser ? 'inline-flex' : 'none';
+  settingsBtn.style.display         = currentUser ? 'inline' : 'none';
+  updateGoalStrip();
 }
 
 function setAuth(user, tok) {
@@ -155,7 +164,7 @@ document.getElementById('loginFormEl').addEventListener('submit', async (e) => {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
-    setAuth({ name: data.name, email: data.email, _id: data._id }, data.token);
+    setAuth({ name: data.name, email: data.email, _id: data._id, dailyGoal: data.dailyGoal || 3 }, data.token);
     await loadQuestions();
     showApp();
   } catch (err) {
@@ -188,7 +197,7 @@ document.getElementById('registerFormEl').addEventListener('submit', async (e) =
       method: 'POST',
       body: JSON.stringify({ name, email, password }),
     });
-    setAuth({ name: data.name, email: data.email, _id: data._id }, data.token);
+    setAuth({ name: data.name, email: data.email, _id: data._id, dailyGoal: data.dailyGoal || 3 }, data.token);
     await loadQuestions();
     showApp();
   } catch (err) {
@@ -418,7 +427,7 @@ async function toggleSolved(id) {
   try {
     const updated = await api(`/questions/${id}`, {
       method: 'PUT',
-      body: JSON.stringify({ isSolved: !q.solved }),
+      body: JSON.stringify({ solved: !q.solved }),
     });
     questions = questions.map(q => q.id === id ? fromAPI(updated) : q);
     applySearchAndFilter();
@@ -479,8 +488,10 @@ function createCard(q) {
     .map(t => `<span class="tag-badge bg-dsa-blue/10 text-dsa-blue border border-dsa-blue/20 rounded-full px-2 py-0.5 text-[10px] font-bold cursor-pointer hover:bg-dsa-blue/20 transition-colors inline-block" data-tag="${t}">${t}</span>`)
     .join('');
   const tagsHtml  = tagBadges ? `<div class="card-tags flex flex-wrap gap-1 mt-1">${tagBadges}</div>` : '';
+
+  const longNote = q.notes && q.notes.length > 120;
   const notesHtml = q.notes
-    ? `<div class="card-notes text-xs text-slate-500 dark:text-slate-400 mt-1 bg-slate-50 dark:bg-[#0f172a] p-2 rounded-lg border border-slate-200 dark:border-white/5"><i class="fa-solid fa-pen-to-square mr-1 opacity-50"></i>${q.notes}</div>`
+    ? `<div class="card-notes text-xs text-slate-500 dark:text-slate-400 mt-1 bg-slate-50 dark:bg-[#0f172a] p-2 rounded-lg border border-slate-200 dark:border-white/5${longNote ? ' note-clamped' : ''}" id="note-${q.id}"><i class="fa-solid fa-pen-to-square mr-1 opacity-50"></i>${q.notes}</div>${longNote ? `<button class="note-toggle" data-action="toggle-notes" data-id="${q.id}">Show more</button>` : ''}`
     : '';
   const checked = selectedIds.has(q.id) ? 'checked' : '';
 
@@ -491,12 +502,20 @@ function createCard(q) {
   };
   const diffClass = diffColors[q.difficulty] || diffColors.Easy;
 
+  const endOfToday   = new Date(); endOfToday.setHours(23, 59, 59, 999);
+  const reviewDue    = q.solved && q.nextReview && new Date(q.nextReview) <= endOfToday;
+  const reviewSoon   = q.solved && q.nextReview && !reviewDue;
+
   const statusHtml = q.solved
-    ? `<div class="flex items-center gap-1.5 text-dsa-easy text-xs font-bold"><i class="fa-solid fa-check-circle"></i><span class="card-status">Solved</span></div>`
+    ? `<div class="flex items-center gap-1.5 text-dsa-easy text-xs font-bold">
+        <i class="fa-solid fa-check-circle"></i>
+        <span class="card-status">Solved</span>
+        ${reviewDue ? '<span class="ml-1 text-[10px] font-bold text-amber-500 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/30 rounded-full px-1.5 py-0.5">Review due</span>' : ''}
+       </div>`
     : `<div class="flex items-center gap-1.5 text-slate-500 text-xs font-bold"><i class="fa-regular fa-clock"></i><span class="card-status">Unsolved</span></div>`;
 
   const dateHtml = q.solvedDate
-    ? `<span class="text-xs text-slate-500 dark:text-slate-600 font-medium">${new Date(q.solvedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>`
+    ? `<span class="text-xs text-slate-500 dark:text-slate-600 font-medium">${reviewSoon ? `Next: ${new Date(q.nextReview).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : new Date(q.solvedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>`
     : '';
 
   const lcBadge = q.leetcodeUrl
@@ -523,6 +542,7 @@ function createCard(q) {
     </div>
     <div class="card-actions flex gap-2 mt-3 w-full">
       <button class="flex-1 py-1.5 px-2 text-xs font-bold rounded-lg border border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-black/20 hover:bg-slate-200 dark:hover:bg-black/40 transition-colors text-slate-600 dark:text-slate-300" data-action="toggle" data-id="${q.id}">${q.solved ? 'Unsolve' : 'Solve'}</button>
+      ${q.solved ? `<button class="flex-1 py-1.5 px-2 text-xs font-bold rounded-lg border border-dsa-blue/30 bg-dsa-blue/10 text-dsa-blue hover:bg-dsa-blue/20 transition-colors" data-action="review" data-id="${q.id}">Reviewed ✓</button>` : ''}
       <button class="btn-edit flex-1 py-1.5 px-2 text-xs font-bold rounded-lg border border-dsa-medium/30 bg-dsa-medium/10 text-dsa-medium hover:bg-dsa-medium/20 transition-colors" data-action="edit" data-id="${q.id}">Edit</button>
       <button class="btn-delete flex-1 py-1.5 px-2 text-xs font-bold rounded-lg border border-dsa-hard/30 bg-dsa-hard/10 text-dsa-hard hover:bg-dsa-hard/20 transition-colors" data-action="delete" data-id="${q.id}">Delete</button>
     </div>
@@ -536,9 +556,11 @@ questionList.addEventListener('click', e => {
   if (actionBtn) {
     const id     = actionBtn.dataset.id;
     const action = actionBtn.dataset.action;
-    if (action === 'toggle') toggleSolved(id);
-    else if (action === 'edit') openEditModal(id);
+    if (action === 'toggle')       toggleSolved(id);
+    else if (action === 'edit')   openEditModal(id);
     else if (action === 'delete') deleteQuestion(id);
+    else if (action === 'review') reviewQuestion(id);
+    else if (action === 'toggle-notes') toggleNotes(id);
     return;
   }
 
@@ -623,6 +645,10 @@ function applySearchAndFilter() {
 
   if (currentFilter === 'solved')   filtered = filtered.filter(q => q.solved);
   if (currentFilter === 'unsolved') filtered = filtered.filter(q => !q.solved);
+  if (currentFilter === 'review') {
+    const endOfToday = new Date(); endOfToday.setHours(23, 59, 59, 999);
+    filtered = filtered.filter(q => q.solved && q.nextReview && new Date(q.nextReview) <= endOfToday);
+  }
   if (currentDifficulty !== 'all')  filtered = filtered.filter(q => q.difficulty === currentDifficulty);
 
   renderQuestions(sortQuestions(filtered));
@@ -681,6 +707,7 @@ function updateStats() {
 
   document.getElementById('streakCount').textContent = computeStreak() + ' 🔥';
   renderActivityHeatmap();
+  updateGoalStrip();
 }
 
 function renderActivityHeatmap() {
@@ -818,7 +845,7 @@ async function importQuestions(data, mergeOnly) {
           difficulty: q.difficulty || 'Medium',
           tags:       q.tags || [],
           notes:      q.notes || '',
-          isSolved:   q.solved || false,
+          solved:     q.solved || false,
           solvedDate: q.solvedDate || null,
         }),
       }).catch(() => null)
@@ -846,7 +873,7 @@ document.getElementById('bulkSolve').addEventListener('click', async () => {
   const ids = [...selectedIds];
   if (!ids.length) return;
   const results = await Promise.all(
-    ids.map(id => api(`/questions/${id}`, { method: 'PUT', body: JSON.stringify({ isSolved: true }) }).catch(() => null))
+    ids.map(id => api(`/questions/${id}`, { method: 'PUT', body: JSON.stringify({ solved: true }) }).catch(() => null))
   );
   results.filter(Boolean).forEach(q => {
     const norm = fromAPI(q);
@@ -860,7 +887,7 @@ document.getElementById('bulkUnsolve').addEventListener('click', async () => {
   const ids = [...selectedIds];
   if (!ids.length) return;
   const results = await Promise.all(
-    ids.map(id => api(`/questions/${id}`, { method: 'PUT', body: JSON.stringify({ isSolved: false }) }).catch(() => null))
+    ids.map(id => api(`/questions/${id}`, { method: 'PUT', body: JSON.stringify({ solved: false }) }).catch(() => null))
   );
   results.filter(Boolean).forEach(q => {
     const norm = fromAPI(q);
@@ -925,6 +952,99 @@ document.addEventListener('keydown', e => {
   if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && inInput) {
     e.preventDefault();
     addBtn.click();
+  }
+});
+
+// ── Daily Goal Strip ──────────────────────────────────────────────────────────
+function updateGoalStrip() {
+  if (!currentUser) { goalStrip.style.display = 'none'; return; }
+  const goal = currentUser.dailyGoal || 3;
+  const today = new Date().toISOString().slice(0, 10);
+  const solvedToday = questions.filter(q => q.solved && q.solvedDate && q.solvedDate.slice(0, 10) === today).length;
+  const pct = Math.min(100, Math.round((solvedToday / goal) * 100));
+  goalStrip.style.display = '';
+  goalLabel.textContent   = `${solvedToday}/${goal}`;
+  goalBar.style.width     = pct + '%';
+  goalBar.className = `h-full rounded-full transition-all duration-500 ${pct >= 100 ? 'bg-dsa-easy' : 'bg-dsa-blue'}`;
+}
+
+// ── Spaced Repetition ─────────────────────────────────────────────────────────
+async function reviewQuestion(id) {
+  try {
+    const updated = await api(`/questions/${id}/review`, { method: 'PUT' });
+    questions = questions.map(q => q.id === id ? fromAPI(updated) : q);
+    applySearchAndFilter();
+    updateStats();
+  } catch (err) {
+    console.error('Review update failed:', err);
+  }
+}
+
+// ── Notes Toggle ──────────────────────────────────────────────────────────────
+function toggleNotes(id) {
+  const noteEl = document.getElementById(`note-${id}`);
+  if (!noteEl) return;
+  const btn = noteEl.nextElementSibling;
+  noteEl.classList.toggle('note-clamped');
+  if (btn && btn.classList.contains('note-toggle')) {
+    btn.textContent = noteEl.classList.contains('note-clamped') ? 'Show more' : 'Show less';
+  }
+}
+
+// ── Settings Modal ────────────────────────────────────────────────────────────
+settingsBtn.addEventListener('click', openSettingsModal);
+document.getElementById('settingsClose').addEventListener('click', closeSettingsModal);
+settingsModal.addEventListener('click', e => { if (e.target === settingsModal) closeSettingsModal(); });
+
+function openSettingsModal() {
+  document.getElementById('settingsName').value        = currentUser?.name || '';
+  document.getElementById('settingsDailyGoal').value   = currentUser?.dailyGoal || 3;
+  document.getElementById('settingsCurrentPwd').value  = '';
+  document.getElementById('settingsNewPwd').value      = '';
+  document.getElementById('settingsError').textContent = '';
+  document.getElementById('settingsSuccess').textContent = '';
+  settingsModal.classList.add('active');
+}
+
+function closeSettingsModal() {
+  settingsModal.classList.remove('active');
+}
+
+document.getElementById('settingsSave').addEventListener('click', async () => {
+  const name       = document.getElementById('settingsName').value.trim();
+  const dailyGoal  = parseInt(document.getElementById('settingsDailyGoal').value, 10);
+  const currentPwd = document.getElementById('settingsCurrentPwd').value;
+  const newPwd     = document.getElementById('settingsNewPwd').value;
+  const errorEl    = document.getElementById('settingsError');
+  const successEl  = document.getElementById('settingsSuccess');
+  const saveBtn    = document.getElementById('settingsSave');
+
+  errorEl.textContent   = '';
+  successEl.textContent = '';
+
+  const body = {};
+  if (name) body.name = name;
+  if (dailyGoal >= 1 && !isNaN(dailyGoal)) body.dailyGoal = dailyGoal;
+  if (newPwd) { body.currentPassword = currentPwd; body.newPassword = newPwd; }
+
+  if (!Object.keys(body).length) return;
+
+  saveBtn.disabled    = true;
+  saveBtn.textContent = 'Saving...';
+  try {
+    const data = await api('/auth/profile', { method: 'PUT', body: JSON.stringify(body) });
+    currentUser = { ...currentUser, name: data.name, dailyGoal: data.dailyGoal };
+    localStorage.setItem('dsaUser', JSON.stringify(currentUser));
+    userNameDisplay.textContent = currentUser.name;
+    updateGoalStrip();
+    successEl.textContent = 'Saved!';
+    document.getElementById('settingsCurrentPwd').value = '';
+    document.getElementById('settingsNewPwd').value     = '';
+  } catch (err) {
+    errorEl.textContent = err.message;
+  } finally {
+    saveBtn.disabled    = false;
+    saveBtn.textContent = 'Save Changes';
   }
 });
 

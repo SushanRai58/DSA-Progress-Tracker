@@ -290,6 +290,11 @@ button { transition: all 0.2s; cursor: pointer; outline: none; border: none; }
 .topic-stat-row span:first-child { font-weight: 600; color: var(--text); max-width: 70%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .topic-stat-row span:last-child { font-weight: 700; color: var(--text-muted); flex-shrink: 0; }
 
+/* ── Notes Clamp ──────────────────────────────────────────────────────────────── */
+.note-clamped { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.note-toggle { display: block; background: transparent; padding: 0; color: var(--primary); font-size: 0.6875rem; font-weight: 600; cursor: pointer; }
+.note-toggle:hover { text-decoration: underline; }
+
 /* ── LC Link Badge ────────────────────────────────────────────────────────────── */
 .lc-badge {
   display: inline-flex; align-items: center; gap: 3px;
