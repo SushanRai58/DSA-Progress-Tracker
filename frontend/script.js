@@ -32,6 +32,9 @@ const logoutBtn       = document.getElementById('logoutBtn');
 const userNameDisplay = document.getElementById('userNameDisplay');
 const authOverlay     = document.getElementById('authOverlay');
 const mainContent     = document.getElementById('mainContent');
+const lcUrlInput      = document.getElementById('lcUrl');
+const autoFillBtn     = document.getElementById('autoFillBtn');
+const autoFillStatus  = document.getElementById('autoFillStatus');
 
 // Edit Modal
 const editModal   = document.getElementById('editModal');
@@ -42,6 +45,7 @@ const editTopicEl = document.getElementById('editTopic');
 const editDiffEl  = document.getElementById('editDifficulty');
 const editTagsEl  = document.getElementById('editTags');
 const editNotesEl = document.getElementById('editNotes');
+const editLcUrlEl = document.getElementById('editLcUrl');
 
 // Confirm Modal
 const confirmModal   = document.getElementById('confirmModal');
@@ -77,15 +81,16 @@ async function api(endpoint, options = {}) {
 // ── Normalize API response → frontend format ───────────────────────────────────
 function fromAPI(q) {
   return {
-    id:         q._id,
-    title:      q.title,
-    topic:      q.topic,
-    difficulty: q.difficulty,
-    tags:       q.tags || [],
-    notes:      q.notes || '',
-    solved:     q.isSolved,
-    solvedDate: q.solvedDate ? new Date(q.solvedDate).toISOString() : null,
-    createdAt:  new Date(q.createdAt).getTime(),
+    id:           q._id,
+    title:        q.title,
+    topic:        q.topic,
+    difficulty:   q.difficulty,
+    tags:         q.tags || [],
+    notes:        q.notes || '',
+    solved:       q.isSolved ?? q.solved ?? false,
+    solvedDate:   q.solvedDate ? new Date(q.solvedDate).toISOString() : null,
+    createdAt:    new Date(q.createdAt).getTime(),
+    leetcodeUrl:  q.leetcodeUrl || '',
   };
 }
 
@@ -232,15 +237,51 @@ function clearError(el, input) {
 }
 
 function clearInputs() {
-  titleInput.value      = '';
-  topicInput.value      = '';
-  tagsInput.value       = '';
-  notesInput.value      = '';
-  difficultyInput.value = 'Easy';
+  titleInput.value       = '';
+  topicInput.value       = '';
+  tagsInput.value        = '';
+  notesInput.value       = '';
+  difficultyInput.value  = 'Easy';
+  lcUrlInput.value       = '';
+  autoFillStatus.textContent = '';
+  autoFillStatus.className   = 'text-xs min-h-[1rem] -mt-1';
 }
 
 titleInput.addEventListener('input', () => clearError(titleError, titleInput));
 topicInput.addEventListener('input', () => clearError(topicError, topicInput));
+
+// ── LeetCode Auto-fill ─────────────────────────────────────────────────────────
+autoFillBtn.addEventListener('click', handleAutoFill);
+lcUrlInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); handleAutoFill(); } });
+
+async function handleAutoFill() {
+  const url = lcUrlInput.value.trim();
+  if (!url) return;
+  autoFillBtn.disabled = true;
+  autoFillBtn.textContent = '...';
+  autoFillStatus.textContent = '';
+  autoFillStatus.className = 'text-xs min-h-[1rem] -mt-1';
+  try {
+    const data = await api('/scrape/leetcode', {
+      method: 'POST',
+      body: JSON.stringify({ url }),
+    });
+    titleInput.value      = data.title;
+    difficultyInput.value = data.difficulty;
+    tagsInput.value       = data.tags.join(', ');
+    autoFillStatus.textContent = 'Filled! Review and click Add Question.';
+    autoFillStatus.className   = 'text-xs min-h-[1rem] -mt-1 text-green-600 dark:text-green-400';
+    titleInput.focus();
+    clearError(titleError, titleInput);
+    clearError(topicError, topicInput);
+  } catch (err) {
+    autoFillStatus.textContent = err.message;
+    autoFillStatus.className   = 'text-xs min-h-[1rem] -mt-1 text-red-500';
+  } finally {
+    autoFillBtn.disabled = false;
+    autoFillBtn.textContent = 'Auto-fill';
+  }
+}
 
 // ── Add Question ───────────────────────────────────────────────────────────────
 addBtn.addEventListener('click', addQuestion);
@@ -266,9 +307,10 @@ async function addQuestion() {
 
   addBtn.disabled = true;
   try {
+    const leetcodeUrl = lcUrlInput.value.trim();
     const created = await api('/questions', {
       method: 'POST',
-      body: JSON.stringify({ title, topic, difficulty, notes, tags }),
+      body: JSON.stringify({ title, topic, difficulty, notes, tags, leetcodeUrl }),
     });
     questions.unshift(fromAPI(created));
     applySearchAndFilter();
@@ -314,12 +356,13 @@ document.getElementById('qaAdd').addEventListener('click', async () => {
 function openEditModal(id) {
   const q = questions.find(q => q.id === id);
   if (!q) return;
-  editingId         = id;
-  editTitleEl.value = q.title;
-  editTopicEl.value = q.topic;
-  editDiffEl.value  = q.difficulty;
-  editTagsEl.value  = (q.tags || []).join(', ');
-  editNotesEl.value = q.notes || '';
+  editingId          = id;
+  editTitleEl.value  = q.title;
+  editTopicEl.value  = q.topic;
+  editDiffEl.value   = q.difficulty;
+  editTagsEl.value   = (q.tags || []).join(', ');
+  editNotesEl.value  = q.notes || '';
+  editLcUrlEl.value  = q.leetcodeUrl || '';
   editModal.classList.add('active');
   editTitleEl.focus();
 }
@@ -351,9 +394,10 @@ modalSave.addEventListener('click', async () => {
       body: JSON.stringify({
         title,
         topic,
-        difficulty: editDiffEl.value,
-        tags:       parseTags(editTagsEl.value),
-        notes:      editNotesEl.value.trim(),
+        difficulty:  editDiffEl.value,
+        tags:        parseTags(editTagsEl.value),
+        notes:       editNotesEl.value.trim(),
+        leetcodeUrl: editLcUrlEl.value.trim(),
       }),
     });
     questions = questions.map(q => q.id === editingId ? fromAPI(updated) : q);
@@ -455,13 +499,20 @@ function createCard(q) {
     ? `<span class="text-xs text-slate-500 dark:text-slate-600 font-medium">${new Date(q.solvedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>`
     : '';
 
+  const lcBadge = q.leetcodeUrl
+    ? `<a href="${q.leetcodeUrl}" target="_blank" rel="noopener noreferrer" class="lc-badge" onclick="event.stopPropagation()"><i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>LC</a>`
+    : '';
+
   div.innerHTML = `
     <div class="card-header flex justify-between items-start gap-2">
       <div class="flex items-start gap-2">
         <input type="checkbox" class="card-checkbox w-4 h-4 mt-1 accent-dsa-blue" data-id="${q.id}" ${checked} />
         <h3 class="card-title font-bold text-lg leading-tight text-slate-800 dark:text-slate-100">${q.title}</h3>
       </div>
-      <span class="diff-label px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${diffClass}">${q.difficulty}</span>
+      <div class="flex items-center gap-1.5 flex-shrink-0">
+        ${lcBadge}
+        <span class="diff-label px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${diffClass}">${q.difficulty}</span>
+      </div>
     </div>
     <p class="text-sm text-slate-500 dark:text-slate-400 font-medium">${q.topic}</p>
     ${tagsHtml}
@@ -537,10 +588,17 @@ sortSelect.addEventListener('change', () => {
 function sortQuestions(list) {
   const diffOrder = { Easy: 1, Medium: 2, Hard: 3 };
   const copy = [...list];
-  if (currentSort === 'title-asc')  return copy.sort((a, b) => a.title.localeCompare(b.title));
-  if (currentSort === 'title-desc') return copy.sort((a, b) => b.title.localeCompare(a.title));
-  if (currentSort === 'diff-asc')   return copy.sort((a, b) => diffOrder[a.difficulty] - diffOrder[b.difficulty]);
-  if (currentSort === 'diff-desc')  return copy.sort((a, b) => diffOrder[b.difficulty] - diffOrder[a.difficulty]);
+  if (currentSort === 'title-asc')   return copy.sort((a, b) => a.title.localeCompare(b.title));
+  if (currentSort === 'title-desc')  return copy.sort((a, b) => b.title.localeCompare(a.title));
+  if (currentSort === 'diff-asc')    return copy.sort((a, b) => diffOrder[a.difficulty] - diffOrder[b.difficulty]);
+  if (currentSort === 'diff-desc')   return copy.sort((a, b) => diffOrder[b.difficulty] - diffOrder[a.difficulty]);
+  if (currentSort === 'date-new')    return copy.sort((a, b) => b.createdAt - a.createdAt);
+  if (currentSort === 'date-solved') return copy.sort((a, b) => {
+    if (!a.solvedDate && !b.solvedDate) return 0;
+    if (!a.solvedDate) return 1;
+    if (!b.solvedDate) return -1;
+    return new Date(b.solvedDate) - new Date(a.solvedDate);
+  });
   return copy;
 }
 

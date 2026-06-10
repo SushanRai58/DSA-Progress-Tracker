@@ -76,6 +76,7 @@
       </select>
       <input type="text" id="editTags" class="form-input" placeholder="Tags (comma-separated)" />
       <textarea id="editNotes" class="form-input" placeholder="Notes (optional)" rows="3"></textarea>
+      <input type="url" id="editLcUrl" class="form-input mt-3" placeholder="LeetCode URL (optional)" />
       <button id="modalSave" class="btn-primary w-full mt-3">Save Changes</button>
     </div>
   </div>
@@ -164,7 +165,7 @@
         <div class="progress-track">
           <div class="progress-fill" id="progressBar" style="width:0%"></div>
         </div>
-        <div class="topic-stats hidden" id="topicStats"></div>
+        <div class="topic-stats" id="topicStats"></div>
       </div>
 
       <!-- Activity Heatmap -->
@@ -182,6 +183,11 @@
       <!-- Add Question Form -->
       <div class="bg-slate-100 dark:bg-dsa-card p-4 rounded-xl border border-slate-200 dark:border-white/5 space-y-3">
         <h2 class="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Add New Question</h2>
+        <div class="flex gap-2">
+          <input type="url" id="lcUrl" class="form-input" placeholder="LeetCode URL (optional — auto-fills below)" />
+          <button type="button" id="autoFillBtn" class="btn-secondary whitespace-nowrap text-sm px-4">Auto-fill</button>
+        </div>
+        <p id="autoFillStatus" class="text-xs min-h-[1rem] -mt-1"></p>
         <div>
           <input type="text" id="title" class="form-input" placeholder="Question Title (e.g., Two Sum)" />
           <span class="error-msg" id="titleError"></span>
@@ -250,6 +256,8 @@
           <option value="title-desc">Title Z&rarr;A</option>
           <option value="diff-asc">Difficulty: Easy first</option>
           <option value="diff-desc">Difficulty: Hard first</option>
+          <option value="date-new">Newest first</option>
+          <option value="date-solved">Solved recently</option>
         </select>
         <button id="groupToggle" class="btn-secondary text-sm whitespace-nowrap">Group by Topic</button>
         <button id="bulkToggle" class="btn-secondary text-sm whitespace-nowrap">Select</button>

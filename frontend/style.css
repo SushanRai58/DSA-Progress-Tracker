@@ -283,3 +283,22 @@ button { transition: all 0.2s; cursor: pointer; outline: none; border: none; }
 
 .topic-header { font-size: 0.875rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin: 1.5rem 0 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
 .empty-state { text-align: center; padding: 3rem 1rem; color: var(--text-muted); font-size: 0.875rem; }
+
+/* ── Topic Stats ──────────────────────────────────────────────────────────────── */
+.topic-stats:not(:empty) { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border); }
+.topic-stat-row { display: flex; justify-content: space-between; align-items: center; padding: 0.2rem 0; font-size: 0.6875rem; }
+.topic-stat-row span:first-child { font-weight: 600; color: var(--text); max-width: 70%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.topic-stat-row span:last-child { font-weight: 700; color: var(--text-muted); flex-shrink: 0; }
+
+/* ── LC Link Badge ────────────────────────────────────────────────────────────── */
+.lc-badge {
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 0.2rem 0.5rem; border-radius: 9999px;
+  font-size: 0.625rem; font-weight: 700; line-height: 1;
+  background: rgba(234,179,8,0.12); color: #ca8a04;
+  border: 1px solid rgba(234,179,8,0.3);
+  transition: background 0.15s;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+.lc-badge:hover { background: rgba(234,179,8,0.25); }
